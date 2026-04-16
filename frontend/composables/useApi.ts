@@ -9,6 +9,7 @@ export function useApi() {
     const url = `${config.public.apiUrl}${path}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      'Accept': 'application/ld+json',
       ...(options.headers as Record<string, string> ?? {}),
     }
 

@@ -8,9 +8,11 @@ use Symfony\Bundle\SecurityBundle\Security;
 
 class MeProvider implements ProviderInterface
 {
-    public function __construct(private readonly Security $security) {}
+    public function __construct(private readonly Security $security)
+    {
+    }
 
-    public function provide(Operation $operation, array $uriVariables = [], array $context = []): object|null
+    public function provide(Operation $operation, array $uriVariables = [], array $context = []): ?object
     {
         return $this->security->getUser();
     }

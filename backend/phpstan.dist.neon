@@ -1,0 +1,21 @@
+parameters:
+    level: 5
+    paths:
+        - src
+
+    symfony:
+        containerXmlPath: var/cache/test/App_KernelTestDebugContainer.xml
+
+    doctrine:
+        objectManagerLoader: tests/doctrine-object-manager.php
+
+    ignoreErrors:
+        # Symfony lifecycle callbacks: properties are nullable in PHP but set by
+        # PrePersist/PreUpdate before flush — the ?Type vs NOT NULL mismatch is expected.
+        - identifier: doctrine.columnType
+        # Association properties are ?Entity in PHP but JoinColumn(nullable: false) in DB;
+        # they are always set before persist.
+        - identifier: doctrine.associationType
+        # ProcessorInterface<Application, Application> makes the instanceof always true;
+        # kept for defensive safety when the generic parameter changes.
+        - identifier: instanceof.alwaysTrue

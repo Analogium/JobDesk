@@ -30,7 +30,8 @@
           :key="status"
           class="flex items-center gap-3"
         >
-          <span class="text-xs w-28 truncate" :class="STATUS_COLORS[status]"
+          <span
+class="text-xs w-28 truncate" :class="STATUS_COLORS[status]"
             style="padding: 2px 8px; border-radius: 9999px; display: inline-block;">
             {{ STATUS_LABELS[status] }}
           </span>

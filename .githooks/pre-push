@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Runs lint + tests before every push.
+# Install once with: git config core.hooksPath .githooks
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+
+echo ""
+echo "╔══════════════════════════════════════╗"
+echo "║         Pre-push checks              ║"
+echo "╚══════════════════════════════════════╝"
+
+"$ROOT/lint.sh"
+"$ROOT/test.sh"

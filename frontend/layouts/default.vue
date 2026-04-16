@@ -38,7 +38,7 @@
             :src="authStore.user.avatarUrl"
             :alt="authStore.user.name"
             class="w-8 h-8 rounded-full"
-          />
+          >
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-gray-900 truncate">{{ authStore.user.name }}</p>
           </div>

@@ -15,7 +15,7 @@ enum ApplicationStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::DRAFT => 'À envoyer',
             self::APPLIED => 'Envoyée',
             self::WAITING => 'En attente',

@@ -18,7 +18,7 @@
           type="url"
           placeholder="https://www.welcometothejungle.com/…"
           class="flex-1 text-sm border-brand-200 rounded-lg focus:ring-brand-500 focus:border-brand-500"
-        />
+        >
         <button
           :disabled="importLoading || !importUrl"
           class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-50"
@@ -35,18 +35,18 @@
       <div class="grid grid-cols-2 gap-5">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">Entreprise *</label>
-          <input v-model="form.companyName" required type="text" class="w-full text-sm border-gray-200 rounded-lg" />
+          <input v-model="form.companyName" required type="text" class="w-full text-sm border-gray-200 rounded-lg" >
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">Poste *</label>
-          <input v-model="form.jobTitle" required type="text" class="w-full text-sm border-gray-200 rounded-lg" />
+          <input v-model="form.jobTitle" required type="text" class="w-full text-sm border-gray-200 rounded-lg" >
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-5">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">Localisation</label>
-          <input v-model="form.location" type="text" class="w-full text-sm border-gray-200 rounded-lg" />
+          <input v-model="form.location" type="text" class="w-full text-sm border-gray-200 rounded-lg" >
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">Contrat</label>
@@ -60,7 +60,7 @@
       <div class="grid grid-cols-2 gap-5">
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">Salaire</label>
-          <input v-model="form.salaryRange" type="text" placeholder="45-55k€" class="w-full text-sm border-gray-200 rounded-lg" />
+          <input v-model="form.salaryRange" type="text" placeholder="45-55k€" class="w-full text-sm border-gray-200 rounded-lg" >
         </div>
         <div>
           <label class="block text-xs font-medium text-gray-700 mb-1">Source</label>
@@ -72,7 +72,7 @@
 
       <div>
         <label class="block text-xs font-medium text-gray-700 mb-1">Date de candidature</label>
-        <input v-model="form.appliedAt" type="date" class="w-full text-sm border-gray-200 rounded-lg" />
+        <input v-model="form.appliedAt" type="date" class="w-full text-sm border-gray-200 rounded-lg" >
       </div>
 
       <div>

@@ -24,7 +24,7 @@ use Symfony\Component\Validator\Constraints as Assert;
     ],
     normalizationContext: ['groups' => ['contact:read', 'application:read']],
     denormalizationContext: ['groups' => ['contact:write']],
-    security: "is_granted('ROLE_USER')"
+    security: "is_granted('ROLE_USER')",
 )]
 class Contact
 {
@@ -57,20 +57,68 @@ class Contact
     #[Groups(['application:read', 'contact:read', 'contact:write'])]
     private ?string $notes = null;
 
-    public function getId(): ?Uuid { return $this->id; }
+    public function getId(): ?Uuid
+    {
+        return $this->id;
+    }
 
-    public function getApplication(): ?Application { return $this->application; }
-    public function setApplication(?Application $v): static { $this->application = $v; return $this; }
+    public function getApplication(): ?Application
+    {
+        return $this->application;
+    }
 
-    public function getName(): ?string { return $this->name; }
-    public function setName(string $v): static { $this->name = $v; return $this; }
+    public function setApplication(?Application $v): static
+    {
+        $this->application = $v;
 
-    public function getEmail(): ?string { return $this->email; }
-    public function setEmail(?string $v): static { $this->email = $v; return $this; }
+        return $this;
+    }
 
-    public function getRole(): ?string { return $this->role; }
-    public function setRole(?string $v): static { $this->role = $v; return $this; }
+    public function getName(): ?string
+    {
+        return $this->name;
+    }
 
-    public function getNotes(): ?string { return $this->notes; }
-    public function setNotes(?string $v): static { $this->notes = $v; return $this; }
+    public function setName(string $v): static
+    {
+        $this->name = $v;
+
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(?string $v): static
+    {
+        $this->email = $v;
+
+        return $this;
+    }
+
+    public function getRole(): ?string
+    {
+        return $this->role;
+    }
+
+    public function setRole(?string $v): static
+    {
+        $this->role = $v;
+
+        return $this;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function setNotes(?string $v): static
+    {
+        $this->notes = $v;
+
+        return $this;
+    }
 }

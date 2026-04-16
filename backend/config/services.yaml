@@ -11,3 +11,10 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\State\ApplicationProcessor:
+        arguments:
+            $inner: '@api_platform.doctrine.orm.state.persist_processor'
+        tags:
+            - name: 'api_platform.state_processor'
+              priority: 0

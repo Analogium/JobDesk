@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Repository\MailScanRepository;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Uid\Uuid;
@@ -21,7 +22,7 @@ class MailScan
     private ?User $user = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $scannedAt = null;
+    private ?DateTimeImmutable $scannedAt = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $mailsAnalyzed = null;
@@ -37,25 +38,76 @@ class MailScan
 
     public function __construct()
     {
-        $this->scannedAt = new \DateTimeImmutable();
+        $this->scannedAt = new DateTimeImmutable();
     }
 
-    public function getId(): ?Uuid { return $this->id; }
+    public function getId(): ?Uuid
+    {
+        return $this->id;
+    }
 
-    public function getUser(): ?User { return $this->user; }
-    public function setUser(?User $v): static { $this->user = $v; return $this; }
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
 
-    public function getScannedAt(): ?\DateTimeImmutable { return $this->scannedAt; }
+    public function setUser(?User $v): static
+    {
+        $this->user = $v;
 
-    public function getMailsAnalyzed(): ?int { return $this->mailsAnalyzed; }
-    public function setMailsAnalyzed(?int $v): static { $this->mailsAnalyzed = $v; return $this; }
+        return $this;
+    }
 
-    public function getMatchesFound(): ?int { return $this->matchesFound; }
-    public function setMatchesFound(?int $v): static { $this->matchesFound = $v; return $this; }
+    public function getScannedAt(): ?DateTimeImmutable
+    {
+        return $this->scannedAt;
+    }
 
-    public function getStatus(): string { return $this->status; }
-    public function setStatus(string $v): static { $this->status = $v; return $this; }
+    public function getMailsAnalyzed(): ?int
+    {
+        return $this->mailsAnalyzed;
+    }
 
-    public function getErrorMessage(): ?string { return $this->errorMessage; }
-    public function setErrorMessage(?string $v): static { $this->errorMessage = $v; return $this; }
+    public function setMailsAnalyzed(?int $v): static
+    {
+        $this->mailsAnalyzed = $v;
+
+        return $this;
+    }
+
+    public function getMatchesFound(): ?int
+    {
+        return $this->matchesFound;
+    }
+
+    public function setMatchesFound(?int $v): static
+    {
+        $this->matchesFound = $v;
+
+        return $this;
+    }
+
+    public function getStatus(): string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $v): static
+    {
+        $this->status = $v;
+
+        return $this;
+    }
+
+    public function getErrorMessage(): ?string
+    {
+        return $this->errorMessage;
+    }
+
+    public function setErrorMessage(?string $v): static
+    {
+        $this->errorMessage = $v;
+
+        return $this;
+    }
 }

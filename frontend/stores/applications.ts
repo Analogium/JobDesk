@@ -12,8 +12,8 @@ export const useApplicationsStore = defineStore('applications', () => {
     loading.value = true
     error.value = null
     try {
-      const data = await apiFetch<{ 'hydra:member': Application[] }>('/api/applications?order[createdAt]=desc')
-      applications.value = data['hydra:member']
+      const data = await apiFetch<{ member: Application[] }>('/api/applications?order[createdAt]=desc')
+      applications.value = data['member']
     } catch (e: any) {
       error.value = e.message
     } finally {

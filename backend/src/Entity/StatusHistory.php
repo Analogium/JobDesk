@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Enum\ApplicationStatus;
 use App\Repository\StatusHistoryRepository;
+use DateTimeImmutable;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Attribute\Groups;
@@ -33,7 +34,7 @@ class StatusHistory
 
     #[ORM\Column]
     #[Groups(['application:read'])]
-    private ?\DateTimeImmutable $changedAt = null;
+    private ?DateTimeImmutable $changedAt = null;
 
     #[ORM\Column(length: 20)]
     #[Groups(['application:read'])]
@@ -45,25 +46,76 @@ class StatusHistory
 
     public function __construct()
     {
-        $this->changedAt = new \DateTimeImmutable();
+        $this->changedAt = new DateTimeImmutable();
     }
 
-    public function getId(): ?Uuid { return $this->id; }
+    public function getId(): ?Uuid
+    {
+        return $this->id;
+    }
 
-    public function getApplication(): ?Application { return $this->application; }
-    public function setApplication(?Application $v): static { $this->application = $v; return $this; }
+    public function getApplication(): ?Application
+    {
+        return $this->application;
+    }
 
-    public function getPreviousStatus(): ?ApplicationStatus { return $this->previousStatus; }
-    public function setPreviousStatus(?ApplicationStatus $v): static { $this->previousStatus = $v; return $this; }
+    public function setApplication(?Application $v): static
+    {
+        $this->application = $v;
 
-    public function getNewStatus(): ?ApplicationStatus { return $this->newStatus; }
-    public function setNewStatus(ApplicationStatus $v): static { $this->newStatus = $v; return $this; }
+        return $this;
+    }
 
-    public function getChangedAt(): ?\DateTimeImmutable { return $this->changedAt; }
+    public function getPreviousStatus(): ?ApplicationStatus
+    {
+        return $this->previousStatus;
+    }
 
-    public function getTrigger(): string { return $this->trigger; }
-    public function setTrigger(string $v): static { $this->trigger = $v; return $this; }
+    public function setPreviousStatus(?ApplicationStatus $v): static
+    {
+        $this->previousStatus = $v;
 
-    public function getNotes(): ?string { return $this->notes; }
-    public function setNotes(?string $v): static { $this->notes = $v; return $this; }
+        return $this;
+    }
+
+    public function getNewStatus(): ?ApplicationStatus
+    {
+        return $this->newStatus;
+    }
+
+    public function setNewStatus(ApplicationStatus $v): static
+    {
+        $this->newStatus = $v;
+
+        return $this;
+    }
+
+    public function getChangedAt(): ?DateTimeImmutable
+    {
+        return $this->changedAt;
+    }
+
+    public function getTrigger(): string
+    {
+        return $this->trigger;
+    }
+
+    public function setTrigger(string $v): static
+    {
+        $this->trigger = $v;
+
+        return $this;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function setNotes(?string $v): static
+    {
+        $this->notes = $v;
+
+        return $this;
+    }
 }

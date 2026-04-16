@@ -26,11 +26,12 @@ class GoogleAuthenticator extends OAuth2Authenticator
         private readonly EntityManagerInterface $entityManager,
         private readonly UserRepository $userRepository,
         private readonly JWTTokenManagerInterface $jwtManager,
-    ) {}
+    ) {
+    }
 
     public function supports(Request $request): ?bool
     {
-        return $request->attributes->get('_route') === 'connect_google_check';
+        return 'connect_google_check' === $request->attributes->get('_route');
     }
 
     public function authenticate(Request $request): Passport
@@ -50,7 +51,7 @@ class GoogleAuthenticator extends OAuth2Authenticator
                     $user->setEmail((string) $googleUser->getEmail());
                 }
 
-                $user->setName($googleUser->getName() ?? $googleUser->getEmail());
+                $user->setName($googleUser->getName() ?: (string) $googleUser->getEmail());
                 $user->setAvatarUrl($googleUser->getAvatar());
                 $user->setGoogleToken($accessToken->getToken());
 
@@ -58,7 +59,7 @@ class GoogleAuthenticator extends OAuth2Authenticator
                 $this->entityManager->flush();
 
                 return $user;
-            })
+            }),
         );
     }
 
@@ -70,14 +71,14 @@ class GoogleAuthenticator extends OAuth2Authenticator
 
         $frontendUrl = $_ENV['FRONTEND_URL'] ?? 'http://localhost:3000';
 
-        return new RedirectResponse($frontendUrl . '/auth/callback?token=' . $jwt);
+        return new RedirectResponse($frontendUrl.'/auth/callback?token='.$jwt);
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
         return new JsonResponse(
             ['error' => strtr($exception->getMessageKey(), $exception->getMessageData())],
-            Response::HTTP_UNAUTHORIZED
+            Response::HTTP_UNAUTHORIZED,
         );
     }
 }

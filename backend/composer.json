@@ -34,6 +34,13 @@
         "symfony/yaml": "7.*"
     },
     "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-doctrine": "^2.0",
+        "phpstan/phpstan-symfony": "^2.0",
+        "phpunit/phpunit": "^13.1",
+        "symfony/browser-kit": "7.*",
         "symfony/debug-bundle": "7.*",
         "symfony/maker-bundle": "^1.62",
         "symfony/stopwatch": "7.*",
@@ -43,7 +50,8 @@
         "allow-plugins": {
             "php-http/discovery": true,
             "symfony/flex": true,
-            "symfony/runtime": true
+            "symfony/runtime": true,
+            "phpstan/extension-installer": true
         },
         "sort-packages": true
     },
@@ -74,7 +82,10 @@
             "assets:install %PUBLIC_DIR%": "symfony-cmd"
         },
         "post-install-cmd": ["@auto-scripts"],
-        "post-update-cmd": ["@auto-scripts"]
+        "post-update-cmd": ["@auto-scripts"],
+        "lint":      "php-cs-fixer fix --dry-run --diff",
+        "lint:fix":  "php-cs-fixer fix",
+        "phpstan":   "phpstan analyse --configuration=phpstan.dist.neon --memory-limit=256M"
     },
     "extra": {
         "symfony": {

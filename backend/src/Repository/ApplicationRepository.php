@@ -5,6 +5,7 @@ namespace App\Repository;
 use App\Entity\Application;
 use App\Entity\User;
 use App\Enum\ApplicationStatus;
+use DateTimeImmutable;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -39,7 +40,7 @@ class ApplicationRepository extends ServiceEntityRepository
      */
     public function findStaleApplications(User $user, int $days = 7): array
     {
-        $threshold = new \DateTimeImmutable("-{$days} days");
+        $threshold = new DateTimeImmutable("-{$days} days");
 
         return $this->createQueryBuilder('a')
             ->andWhere('a.user = :user')

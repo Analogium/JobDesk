@@ -1,6 +1,6 @@
 # JobDesk — Roadmap
 
-## Phase 1 — Socle ✅ (terminé)
+## Phase 1 — Socle 🔧 (en cours)
 
 - [x] Docker Compose dev (backend + nginx + frontend + postgres)
 - [x] Docker Compose prod (labels Traefik, réseaux VPS)
@@ -9,9 +9,9 @@
 - [x] Google OAuth 2.0 + JWT
 - [x] Entités : User, Application, StatusHistory, MailScan, Contact
 - [x] Enums : ApplicationStatus, ContractType, ApplicationSource
-- [x] API REST CRUD candidatures (GET, POST, PATCH, DELETE)
-- [x] Auto-historique des changements de statut (EventListener)
-- [x] Frontend : login, dashboard, liste, détail, formulaire ajout
+- [x] API REST CRUD candidatures (GET, POST, PATCH, DELETE) — testé et validé
+- [x] Auto-historique des changements de statut — testé et validé
+- [ ] Frontend : login ✓, dashboard, liste, détail, formulaire ajout — à tester en UI
 
 ---
 
@@ -24,8 +24,8 @@ Objectif : coller une URL d'offre → pré-remplissage automatique du formulaire
 - [ ] Parser Indeed (`indeed.fr` / `indeed.com`)
 - [ ] Parser LinkedIn *(best effort, anti-bot probable)*
 - [ ] Fallback générique : extraction via meta tags (`og:title`, `og:description`…)
-- [ ] Endpoint API `POST /api/scrape` → retourne les champs pré-remplis
-- [ ] Frontend : champ URL dans le formulaire → appel → pré-remplissage + confirmation
+- [ ] Endpoint API `POST /api/scrape` → retourne les champs pré-remplis *(appelé dans new.vue, 404 pour l'instant)*
+- [ ] Frontend : champ URL dans le formulaire → appel → pré-remplissage + confirmation *(UI scaffoldée, en attente backend)*
 
 ---
 

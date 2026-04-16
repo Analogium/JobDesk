@@ -21,7 +21,11 @@ doctrine:
 when@test:
     doctrine:
         dbal:
-            dbname_suffix: '_test%env(default::TEST_TOKEN)%'
+            url: ~
+            driver: pdo_sqlite
+            path: '%kernel.project_dir%/var/test.db'
+            types:
+                uuid: App\Doctrine\Type\SqliteUuidType
 
 when@prod:
     doctrine:

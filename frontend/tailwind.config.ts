@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import forms from '@tailwindcss/forms'
 
 export default {
   content: [
@@ -27,6 +28,6 @@ export default {
     },
   },
   plugins: [
-    require('@tailwindcss/forms'),
+    forms,
   ],
 } satisfies Config

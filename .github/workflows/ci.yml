@@ -1,0 +1,163 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  backend-lint:
+    name: Backend (CS Fixer + PHPStan)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, intl, uuid
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        working-directory: backend
+
+      - name: Generate JWT keys
+        run: |
+          mkdir -p config/jwt
+          openssl genrsa -passout pass:changeme -out config/jwt/private.pem 2048
+          openssl rsa -passin pass:changeme -in config/jwt/private.pem -pubout -out config/jwt/public.pem
+        working-directory: backend
+
+      - name: PHP CS Fixer (dry-run)
+        run: composer lint
+        working-directory: backend
+
+      - name: Warmup test cache (for PHPStan Symfony extension)
+        env:
+          APP_ENV: test
+          JWT_PASSPHRASE: changeme
+          APP_SECRET: ci-secret-not-used-in-prod
+          GOOGLE_CLIENT_ID: ci-placeholder
+          GOOGLE_CLIENT_SECRET: ci-placeholder
+        run: php bin/console cache:warmup --env=test
+        working-directory: backend
+
+      - name: PHPStan
+        run: composer phpstan
+        working-directory: backend
+
+  # ────────────────────────────────────────────────────────────────────────────
+  backend-tests:
+    name: Backend (PHPUnit)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP 8.4
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: pdo_sqlite, intl, uuid
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('backend/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        working-directory: backend
+
+      - name: Generate JWT keys (no passphrase for CI)
+        run: |
+          mkdir -p config/jwt
+          openssl genrsa -passout pass:changeme -out config/jwt/private.pem 2048
+          openssl rsa -passin pass:changeme -in config/jwt/private.pem -pubout -out config/jwt/public.pem
+        working-directory: backend
+
+      - name: Run PHPUnit
+        env:
+          APP_ENV: test
+          JWT_PASSPHRASE: changeme
+          APP_SECRET: ci-secret-not-used-in-prod
+          GOOGLE_CLIENT_ID: ci-placeholder
+          GOOGLE_CLIENT_SECRET: ci-placeholder
+        run: php bin/phpunit --no-coverage
+        working-directory: backend
+
+  # ────────────────────────────────────────────────────────────────────────────
+  frontend-lint:
+    name: Frontend (ESLint)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: ESLint
+        run: npm run lint
+        working-directory: frontend
+
+  # ────────────────────────────────────────────────────────────────────────────
+  frontend-tests:
+    name: Frontend (Vitest)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+        working-directory: frontend
+
+      - name: Run Vitest
+        run: npm run test
+        working-directory: frontend
+
+  # ────────────────────────────────────────────────────────────────────────────
+  build-check:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: [backend-lint, backend-tests, frontend-lint, frontend-tests]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image (dev target)
+        run: docker build --target dev -t jobdesk-backend:ci ./backend
+
+      - name: Build frontend image
+        run: docker build -t jobdesk-frontend:ci ./frontend
