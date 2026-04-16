@@ -26,7 +26,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!token.value) return
     const config = useRuntimeConfig()
     try {
-      const res = await fetch(`${config.public.apiUrl}/api/users/me`, {
+      const res = await fetch(`${config.public.apiUrl}/api/me`, {
         headers: { Authorization: `Bearer ${token.value}` },
       })
       if (res.ok) {

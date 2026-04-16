@@ -16,6 +16,8 @@ if [ ! -f config/jwt/private.pem ]; then
     echo "JWT keys generated."
 fi
 
+chown -R www-data:www-data config/jwt/
+
 # Run migrations automatically in dev
 if [ "${APP_ENV}" = "dev" ]; then
     php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration 2>/dev/null || true

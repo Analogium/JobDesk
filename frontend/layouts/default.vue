@@ -66,8 +66,8 @@
 const authStore = useAuthStore()
 const route = useRoute()
 
-// Redirect to login if not authenticated
-watchEffect(() => {
+// Guard côté client uniquement (localStorage indisponible côté serveur)
+onMounted(() => {
   if (!authStore.isAuthenticated && !route.path.startsWith('/auth')) {
     navigateTo('/auth/login')
   }

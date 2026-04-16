@@ -6,5 +6,6 @@
 
 <script setup lang="ts">
 const authStore = useAuthStore()
-onMounted(() => authStore.init())
+// fetchMe en arrière-plan pour hydrater le profil utilisateur
+onMounted(() => { if (authStore.isAuthenticated) authStore.fetchMe() })
 </script>

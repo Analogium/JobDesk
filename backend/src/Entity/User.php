@@ -10,15 +10,15 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Attribute\Groups;
+use App\State\MeProvider;
 use Symfony\Component\Uid\Uuid;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
 #[ORM\HasLifecycleCallbacks]
 #[ApiResource(
-    operations: [new Get(uriTemplate: '/me')],
+    operations: [new Get(uriTemplate: '/me', provider: MeProvider::class)],
     normalizationContext: ['groups' => ['user:read']],
-    security: "is_granted('ROLE_USER')"
 )]
 class User implements UserInterface
 {
