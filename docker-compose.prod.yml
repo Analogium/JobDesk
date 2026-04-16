@@ -1,0 +1,70 @@
+# À intégrer dans /home/lambert/apps/docker-compose.yml sur le VPS
+# Remplacer JOBDESK_DOMAIN par le domaine réel (ex: jobdesk.theolambert.dev)
+
+services:
+  jobdesk_backend:
+    build:
+      context: ./jobdesk/backend
+      target: prod
+    image: jobdesk_backend:latest
+    container_name: jobdesk_backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: prod
+      APP_DEBUG: "0"
+      DATABASE_URL: postgresql://${JOBDESK_DB_USER}:${JOBDESK_DB_PASSWORD}@postgres:5432/${JOBDESK_DB_NAME}
+      JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
+      JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
+      JWT_PASSPHRASE: ${JOBDESK_JWT_PASSPHRASE}
+      GOOGLE_CLIENT_ID: ${JOBDESK_GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${JOBDESK_GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: https://${JOBDESK_DOMAIN}
+      CORS_ALLOW_ORIGIN: "^https://${JOBDESK_DOMAIN}$"
+      APP_SECRET: ${JOBDESK_APP_SECRET}
+    networks:
+      - web
+      - internal
+    depends_on:
+      - postgres
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jobdesk-api.rule=Host(`api.${JOBDESK_DOMAIN}`)"
+      - "traefik.http.routers.jobdesk-api.entrypoints=websecure"
+      - "traefik.http.routers.jobdesk-api.tls=true"
+      - "traefik.http.routers.jobdesk-api.tls.certresolver=cloudflare"
+      - "traefik.http.services.jobdesk-api.loadbalancer.server.port=80"
+      - "traefik.http.routers.jobdesk-api-http.rule=Host(`api.${JOBDESK_DOMAIN}`)"
+      - "traefik.http.routers.jobdesk-api-http.entrypoints=web"
+      - "traefik.http.routers.jobdesk-api-http.middlewares=jobdesk-api-https"
+      - "traefik.http.middlewares.jobdesk-api-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.jobdesk-api-https.redirectscheme.permanent=true"
+
+  jobdesk_frontend:
+    build:
+      context: ./jobdesk/frontend
+      target: prod
+    image: jobdesk_frontend:latest
+    container_name: jobdesk_frontend
+    restart: unless-stopped
+    environment:
+      NUXT_PUBLIC_API_URL: https://api.${JOBDESK_DOMAIN}
+    networks:
+      - web
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.jobdesk.rule=Host(`${JOBDESK_DOMAIN}`)"
+      - "traefik.http.routers.jobdesk.entrypoints=websecure"
+      - "traefik.http.routers.jobdesk.tls=true"
+      - "traefik.http.routers.jobdesk.tls.certresolver=cloudflare"
+      - "traefik.http.services.jobdesk.loadbalancer.server.port=3000"
+      - "traefik.http.routers.jobdesk-http.rule=Host(`${JOBDESK_DOMAIN}`)"
+      - "traefik.http.routers.jobdesk-http.entrypoints=web"
+      - "traefik.http.routers.jobdesk-http.middlewares=jobdesk-https"
+      - "traefik.http.middlewares.jobdesk-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.jobdesk-https.redirectscheme.permanent=true"
+
+networks:
+  web:
+    external: true
+  internal:
+    external: true

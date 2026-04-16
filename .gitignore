@@ -1,0 +1,44 @@
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node / frontend
+node_modules/
+frontend/node_modules/
+frontend/.next/
+frontend/dist/
+frontend/build/
+frontend/.vite/
+
+# PHP / Symfony backend
+backend/vendor/
+backend/var/
+backend/public/bundles/
+backend/config/secrets/prod/prod.decrypt.private.php
+backend/config/secrets/prod/prod.decrypt.private.pem
+backend/config/jwt/
+backend/config/jwt/*.pem
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Docker
+.docker/
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+VPS_ARCHI.md
+JobDesk.md

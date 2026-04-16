@@ -1,0 +1,81 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: dev
+    container_name: jobdesk_backend
+    restart: unless-stopped
+    volumes:
+      - ./backend:/var/www/html
+      - /var/www/html/vendor
+    environment:
+      APP_ENV: dev
+      APP_DEBUG: "1"
+      DATABASE_URL: "postgresql://jobdesk:jobdesk@postgres:5432/jobdesk?serverVersion=15&charset=utf8"
+      JWT_SECRET_KEY: "%kernel.project_dir%/config/jwt/private.pem"
+      JWT_PUBLIC_KEY: "%kernel.project_dir%/config/jwt/public.pem"
+      JWT_PASSPHRASE: ${JWT_PASSPHRASE:-changeme}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: http://localhost:3000
+      CORS_ALLOW_ORIGIN: "^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$"
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  nginx:
+    image: nginx:alpine
+    container_name: jobdesk_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend/public:/var/www/html/public:ro
+      - ./backend/docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - internal
+    depends_on:
+      - backend
+
+  frontend:
+    build:
+      context: ./frontend
+      target: dev
+    container_name: jobdesk_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      NUXT_PUBLIC_API_URL: http://localhost:8000
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: jobdesk_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jobdesk
+      POSTGRES_USER: jobdesk
+      POSTGRES_PASSWORD: jobdesk
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobdesk"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+networks:
+  internal:
+
+volumes:
+  postgres_data:
