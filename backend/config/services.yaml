@@ -1,4 +1,5 @@
 parameters:
+    app.playwright_url: ''
 
 services:
     _defaults:
@@ -11,6 +12,10 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+
+    App\Service\ScraperService:
+        arguments:
+            $playwrightUrl: '%env(default:app.playwright_url:PLAYWRIGHT_URL)%'
 
     App\State\ApplicationProcessor:
         arguments:

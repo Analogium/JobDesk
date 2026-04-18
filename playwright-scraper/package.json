@@ -1,0 +1,13 @@
+{
+  "name": "playwright-scraper",
+  "version": "1.0.0",
+  "description": "Headless browser scraping microservice",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0",
+    "playwright": "^1.44.0"
+  }
+}

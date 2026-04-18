@@ -27,7 +27,7 @@ export function useApi() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body['hydra:description'] ?? body.message ?? `HTTP ${res.status}`)
+      throw new Error(body['hydra:description'] ?? body.message ?? body.error ?? `HTTP ${res.status}`)
     }
 
     if (res.status === 204) return undefined as T
