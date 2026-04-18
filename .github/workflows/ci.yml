@@ -51,7 +51,9 @@ jobs:
           APP_SECRET: ci-secret-not-used-in-prod
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
-        run: php bin/console cache:warmup --env=test
+        run: |
+          touch .env
+          php bin/console cache:warmup --env=test
         working-directory: backend
 
       - name: PHPStan
@@ -98,7 +100,9 @@ jobs:
           APP_SECRET: ci-secret-not-used-in-prod
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
-        run: php bin/phpunit --no-coverage
+        run: |
+          touch .env
+          php bin/phpunit --no-coverage
         working-directory: backend
 
   # ────────────────────────────────────────────────────────────────────────────
