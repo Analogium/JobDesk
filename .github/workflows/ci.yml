@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [master, main, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [master, main, develop]
 
 jobs:
   # ────────────────────────────────────────────────────────────────────────────
@@ -30,7 +30,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        run: composer install --no-progress --prefer-dist --optimize-autoloader --no-scripts
         working-directory: backend
 
       - name: Generate JWT keys
@@ -51,7 +51,10 @@ jobs:
           APP_SECRET: ci-secret-not-used-in-prod
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
-        run: php bin/console cache:warmup --env=test
+          DEFAULT_URI: http://localhost
+        run: |
+          touch .env
+          php bin/console cache:warmup --env=test
         working-directory: backend
 
       - name: PHPStan
@@ -81,7 +84,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Composer dependencies
-        run: composer install --no-progress --prefer-dist --optimize-autoloader
+        run: composer install --no-progress --prefer-dist --optimize-autoloader --no-scripts
         working-directory: backend
 
       - name: Generate JWT keys (no passphrase for CI)
@@ -98,7 +101,10 @@ jobs:
           APP_SECRET: ci-secret-not-used-in-prod
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
-        run: php bin/phpunit --no-coverage
+          DEFAULT_URI: http://localhost
+        run: |
+          touch .env
+          php bin/phpunit --no-coverage
         working-directory: backend
 
   # ────────────────────────────────────────────────────────────────────────────
