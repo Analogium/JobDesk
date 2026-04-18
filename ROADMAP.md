@@ -11,21 +11,24 @@
 - [x] Enums : ApplicationStatus, ContractType, ApplicationSource
 - [x] API REST CRUD candidatures (GET, POST, PATCH, DELETE) — testé et validé
 - [x] Auto-historique des changements de statut — testé et validé
-- [ ] Frontend : login ✓, dashboard, liste, détail, formulaire ajout — à tester en UI
+- [x] Frontend : login ✓, dashboard, liste, détail, formulaire ajout — à tester en UI
 
 ---
 
-## Phase 2 — Import URL 🔧
+## Phase 2 — Import URL ✅
 
 Objectif : coller une URL d'offre → pré-remplissage automatique du formulaire.
 
-- [ ] `ScraperService` (Symfony HttpClient + DomCrawler)
-- [ ] Parser Welcome to the Jungle (`welcometothejungle.com`)
-- [ ] Parser Indeed (`indeed.fr` / `indeed.com`)
-- [ ] Parser LinkedIn *(best effort, anti-bot probable)*
-- [ ] Fallback générique : extraction via meta tags (`og:title`, `og:description`…)
-- [ ] Endpoint API `POST /api/scrape` → retourne les champs pré-remplis *(appelé dans new.vue, 404 pour l'instant)*
-- [ ] Frontend : champ URL dans le formulaire → appel → pré-remplissage + confirmation *(UI scaffoldée, en attente backend)*
+- [x] `ScraperService` (Symfony HttpClient + DomCrawler)
+- [x] Parser Welcome to the Jungle — JSON-LD `JobPosting` en priorité, CSS selectors en fallback
+- [x] Parser LinkedIn — CSS selectors + criteria list pour le type de contrat
+  - [x] Normalisation URL recherche (`currentJobId`) → `/jobs/view/{id}`
+- [x] Parser Indeed — bloqué par Cloudflare (403) → erreur explicite renvoyée
+  - [x] Normalisation URL recherche (`vjk`) → `/viewjob?jk={id}`
+  - *(Playwright headless prévu en phase 4 si besoin)*
+- [x] Fallback générique : extraction via meta tags (`og:title`, `og:description`…)
+- [x] Endpoint API `POST /api/scrape` — auth JWT, validation URL (accents inclus), 400/502 explicites
+- [x] Frontend : champ URL dans le formulaire → appel → pré-remplissage *(déjà câblé)*
 
 ---
 

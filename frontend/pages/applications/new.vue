@@ -15,7 +15,7 @@
       <div class="flex gap-2">
         <input
           v-model="importUrl"
-          type="url"
+          type="text"
           placeholder="https://www.welcometothejungle.com/…"
           class="flex-1 text-sm border-brand-200 rounded-lg focus:ring-brand-500 focus:border-brand-500"
         >

@@ -1,4 +1,12 @@
 services:
+  playwright:
+    build:
+      context: ./playwright-scraper
+    container_name: jobdesk_playwright
+    restart: unless-stopped
+    networks:
+      - internal
+
   backend:
     build:
       context: ./backend
@@ -19,11 +27,14 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       FRONTEND_URL: http://localhost:3000
       CORS_ALLOW_ORIGIN: "^https?://(localhost|127\\.0\\.0\\.1)(:[0-9]+)?$"
+      PLAYWRIGHT_URL: http://playwright:3001
     networks:
       - internal
     depends_on:
       postgres:
         condition: service_healthy
+      playwright:
+        condition: service_started
 
   nginx:
     image: nginx:alpine
