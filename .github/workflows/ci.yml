@@ -51,6 +51,7 @@ jobs:
           APP_SECRET: ci-secret-not-used-in-prod
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
+          DEFAULT_URI: http://localhost
         run: |
           touch .env
           php bin/console cache:warmup --env=test
@@ -100,6 +101,7 @@ jobs:
           APP_SECRET: ci-secret-not-used-in-prod
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
+          DEFAULT_URI: http://localhost
         run: |
           touch .env
           php bin/phpunit --no-coverage
