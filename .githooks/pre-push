@@ -10,5 +10,22 @@ echo "╔═══════════════════════�
 echo "║         Pre-push checks              ║"
 echo "╚══════════════════════════════════════╝"
 
+# ── S'assurer que les containers tournent ─────────────────────────────────────
+CONTAINERS=(jobdesk_backend jobdesk_frontend)
+NEEDS_START=0
+
+for c in "${CONTAINERS[@]}"; do
+  if ! docker inspect "$c" --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
+    NEEDS_START=1
+    break
+  fi
+done
+
+if [[ $NEEDS_START -eq 1 ]]; then
+  echo "▶ Containers arrêtés — démarrage automatique..."
+  docker compose -f "$ROOT/docker-compose.yml" up -d --wait 2>&1 | grep -E "Started|Healthy|error" || true
+  echo ""
+fi
+
 "$ROOT/lint.sh"
 "$ROOT/test.sh"
