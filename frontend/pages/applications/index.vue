@@ -57,6 +57,16 @@
               >
                 {{ STATUS_LABELS[app.status] }}
               </span>
+              <span
+                v-if="hasRecentAutoMail(app)"
+                title="Statut mis à jour automatiquement depuis Gmail"
+                class="inline-flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full"
+              >
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Gmail
+              </span>
             </div>
             <p class="text-sm text-gray-600 truncate">{{ app.jobTitle }}</p>
             <div class="flex items-center gap-4 mt-2 text-xs text-gray-400">
@@ -78,6 +88,7 @@ import {
   STATUS_COLORS,
   CONTRACT_LABELS,
   SOURCE_LABELS,
+  type Application,
   type ApplicationStatus,
 } from '~/types'
 
@@ -98,5 +109,12 @@ const filtered = computed(() =>
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
+}
+
+function hasRecentAutoMail(app: Application): boolean {
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000
+  return app.statusHistories.some(
+    h => h.trigger === 'auto_mail' && new Date(h.changedAt).getTime() > cutoff,
+  )
 }
 </script>

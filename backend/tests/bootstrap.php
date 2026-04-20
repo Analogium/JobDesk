@@ -1,5 +1,6 @@
 <?php
 
+use App\Doctrine\Type\EncryptedStringType;
 use App\Kernel;
 use Doctrine\ORM\Tools\SchemaTool;
 use Symfony\Component\Dotenv\Dotenv;
@@ -17,6 +18,8 @@ putenv('APP_ENV=test');
 if (method_exists(Dotenv::class, 'bootEnv')) {
     (new Dotenv())->bootEnv(dirname(__DIR__).'/.env');
 }
+
+EncryptedStringType::setKey($_ENV['APP_SECRET'] ?? 'test-secret');
 
 if ($_SERVER['APP_DEBUG']) {
     umask(0000);

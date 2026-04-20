@@ -24,5 +24,6 @@ security:
     access_control:
         - { path: ^/auth/google$, roles: PUBLIC_ACCESS }
         - { path: ^/auth/google/check$, roles: PUBLIC_ACCESS }
+        - { path: ^/api/gmail/callback$, roles: PUBLIC_ACCESS }
         - { path: ^/api/docs, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: IS_AUTHENTICATED_FULLY }
