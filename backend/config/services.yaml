@@ -17,6 +17,23 @@ services:
         arguments:
             $playwrightUrl: '%env(default:app.playwright_url:PLAYWRIGHT_URL)%'
 
+    App\EventSubscriber\EncryptionKeySubscriber:
+        arguments:
+            $encryptionKey: '%env(APP_SECRET)%'
+
+    App\Controller\GmailController:
+        arguments:
+            $appSecret: '%env(APP_SECRET)%'
+            $googleClientId: '%env(GOOGLE_CLIENT_ID)%'
+            $googleClientSecret: '%env(GOOGLE_CLIENT_SECRET)%'
+            $backendUrl: '%env(default::BACKEND_URL)%'
+            $frontendUrl: '%env(default::FRONTEND_URL)%'
+
+    App\Service\MailScanService:
+        arguments:
+            $googleClientId: '%env(GOOGLE_CLIENT_ID)%'
+            $googleClientSecret: '%env(GOOGLE_CLIENT_SECRET)%'
+
     App\State\ApplicationProcessor:
         arguments:
             $inner: '@api_platform.doctrine.orm.state.persist_processor'

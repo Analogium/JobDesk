@@ -52,6 +52,8 @@ jobs:
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
           DEFAULT_URI: http://localhost
+          BACKEND_URL: http://localhost:8000
+          FRONTEND_URL: http://localhost:3000
         run: |
           touch .env
           php bin/console cache:warmup --env=test
@@ -102,6 +104,8 @@ jobs:
           GOOGLE_CLIENT_ID: ci-placeholder
           GOOGLE_CLIENT_SECRET: ci-placeholder
           DEFAULT_URI: http://localhost
+          BACKEND_URL: http://localhost:8000
+          FRONTEND_URL: http://localhost:3000
         run: |
           touch .env
           php bin/phpunit --no-coverage

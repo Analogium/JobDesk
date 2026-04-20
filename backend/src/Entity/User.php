@@ -45,10 +45,10 @@ class User implements UserInterface
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $googleToken = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: 'encrypted_string', nullable: true)]
     private ?string $gmailToken = null;
 
-    #[ORM\Column(type: 'text', nullable: true)]
+    #[ORM\Column(type: 'encrypted_string', nullable: true)]
     private ?string $gmailRefreshToken = null;
 
     #[ORM\Column(nullable: true)]

@@ -32,22 +32,22 @@ Objectif : coller une URL d'offre → pré-remplissage automatique du formulaire
 
 ---
 
-## Phase 3 — Analyse automatique des mails 📬
+## Phase 3 — Analyse automatique des mails 📬 ✅
 
 Objectif : détecter les réponses (refus, entretien, offre) dans Gmail et mettre à jour les statuts automatiquement.
 
-- [ ] Connexion Gmail API via OAuth (scope `gmail.readonly`)
-  - [ ] Bouton "Connecter Gmail" dans les settings utilisateur
-  - [ ] Stockage `gmailToken` + `gmailRefreshToken` chiffrés en base
-- [ ] `MailScanService` : récupération et analyse des mails
-  - [ ] Matching expéditeur ↔ entreprise (nom + domaine)
-  - [ ] Détection refus (mots-clés FR/EN)
-  - [ ] Détection entretien (mots-clés FR/EN)
-  - [ ] Détection offre (mots-clés FR/EN)
-- [ ] Mise à jour automatique des statuts + entrée `StatusHistory` (trigger `auto_mail`)
-- [ ] `MailScanScheduler` (Symfony Scheduler, toutes les 2h)
-- [ ] Logs de scan dans `MailScan` (mails analysés, matches trouvés, erreurs)
-- [ ] Notifications in-app des changements détectés
+- [x] Connexion Gmail API via OAuth (scope `gmail.readonly`)
+  - [x] Bouton "Connecter Gmail" dans les settings utilisateur
+  - [x] Stockage `gmailToken` + `gmailRefreshToken` chiffrés en base (AES-256-GCM via `EncryptedStringType`)
+- [x] `MailScanService` : récupération et analyse des mails
+  - [x] Matching expéditeur ↔ entreprise (nom + domaine + sujet + snippet)
+  - [x] Détection refus (mots-clés FR/EN)
+  - [x] Détection entretien (mots-clés FR/EN)
+  - [x] Détection offre (mots-clés FR/EN)
+- [x] Mise à jour automatique des statuts + entrée `StatusHistory` (trigger `auto_mail`)
+- [x] `MailScanScheduler` (Symfony Scheduler, toutes les 2h)
+- [x] Logs de scan dans `MailScan` (mails analysés, matches trouvés, erreurs)
+- [x] Notifications in-app des changements détectés (badge Gmail sur candidatures récentes)
 
 ---
 

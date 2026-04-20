@@ -3,6 +3,7 @@ doctrine:
         url: '%env(resolve:DATABASE_URL)%'
         types:
             uuid: Symfony\Bridge\Doctrine\Types\UuidType
+            encrypted_string: App\Doctrine\Type\EncryptedStringType
     orm:
         auto_generate_proxy_classes: true
         enable_lazy_ghost_objects: true

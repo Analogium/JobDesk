@@ -15,4 +15,14 @@ class UserRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, User::class);
     }
+
+    /** @return User[] */
+    public function findUsersWithGmail(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.gmailToken IS NOT NULL')
+            ->andWhere('u.gmailRefreshToken IS NOT NULL')
+            ->getQuery()
+            ->getResult();
+    }
 }
