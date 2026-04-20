@@ -11,6 +11,7 @@ use App\Repository\ApplicationRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
 use League\OAuth2\Client\Provider\Google;
+use RuntimeException;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Throwable;
 
@@ -167,7 +168,7 @@ class MailScanService
 
         if (isset($data['error'])) {
             $msg = $data['error']['message'] ?? $data['error']['status'] ?? json_encode($data['error']);
-            throw new \RuntimeException('Gmail API: '.$msg);
+            throw new RuntimeException('Gmail API: '.$msg);
         }
 
         return $data['messages'] ?? [];

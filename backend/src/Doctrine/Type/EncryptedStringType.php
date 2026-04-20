@@ -4,6 +4,8 @@ namespace App\Doctrine\Type;
 
 use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Types\Type;
+use LogicException;
+use RuntimeException;
 
 /**
  * Stores strings encrypted with AES-256-GCM in the database.
@@ -42,7 +44,7 @@ final class EncryptedStringType extends Type
         }
 
         if ('' === self::$key) {
-            throw new \LogicException('EncryptedStringType: encryption key not set.');
+            throw new LogicException('EncryptedStringType: encryption key not set.');
         }
 
         $iv = random_bytes(self::IV_LENGTH);
@@ -50,7 +52,7 @@ final class EncryptedStringType extends Type
         $cipher = openssl_encrypt((string) $value, self::CIPHER, self::$key, OPENSSL_RAW_DATA, $iv, $tag, '', self::TAG_LENGTH);
 
         if (false === $cipher) {
-            throw new \RuntimeException('Encryption failed.');
+            throw new RuntimeException('Encryption failed.');
         }
 
         return base64_encode($iv.$tag.$cipher);
@@ -63,7 +65,7 @@ final class EncryptedStringType extends Type
         }
 
         if ('' === self::$key) {
-            throw new \LogicException('EncryptedStringType: encryption key not set.');
+            throw new LogicException('EncryptedStringType: encryption key not set.');
         }
 
         $decoded = base64_decode((string) $value, strict: true);
