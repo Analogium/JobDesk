@@ -41,7 +41,7 @@
     </div>
     <ul v-else class="space-y-3">
       <li
-        v-for="app in filtered"
+        v-for="app in paginated"
         :key="app.id"
         class="bg-white border border-gray-200 rounded-xl p-5 hover:border-brand-300 transition-colors cursor-pointer"
         @click="navigateTo(`/applications/${app.id}`)"
@@ -79,6 +79,35 @@
         </div>
       </li>
     </ul>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex items-center justify-center gap-2 mt-8">
+      <button
+        class="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="currentPage === 1"
+        @click="currentPage--"
+      >
+        Précédent
+      </button>
+      <button
+        v-for="p in totalPages"
+        :key="p"
+        class="w-9 h-9 rounded-lg text-sm font-medium border transition-colors"
+        :class="p === currentPage
+          ? 'bg-brand-600 text-white border-brand-600'
+          : 'bg-white text-gray-600 border-gray-200 hover:border-brand-300'"
+        @click="currentPage = p"
+      >
+        {{ p }}
+      </button>
+      <button
+        class="px-3 py-1.5 rounded-lg text-sm font-medium border border-gray-200 bg-white text-gray-600 hover:border-brand-300 disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="currentPage === totalPages"
+        @click="currentPage++"
+      >
+        Suivant
+      </button>
+    </div>
   </div>
 </template>
 
@@ -106,6 +135,22 @@ const filtered = computed(() =>
     ? store.applications
     : (store.byStatus[filter.value] ?? [])
 )
+
+const pageSize = 20
+const currentPage = ref(1)
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)))
+
+const paginated = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filtered.value.slice(start, start + pageSize)
+})
+
+// Revenir à la première page quand on change de filtre
+watch(filter, () => { currentPage.value = 1 })
+
+// Éviter de rester sur une page vide si la liste rétrécit (suppression, etc.)
+watch(totalPages, (n) => { if (currentPage.value > n) currentPage.value = n })
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })

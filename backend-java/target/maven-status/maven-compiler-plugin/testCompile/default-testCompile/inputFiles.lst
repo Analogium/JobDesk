@@ -1,0 +1,7 @@
+/app/src/test/java/com/jobdesk/domain/UserTokenPreservationTest.java
+/app/src/test/java/com/jobdesk/domain/converter/EncryptedStringConverterTest.java
+/app/src/test/java/com/jobdesk/security/GoogleOAuthServiceTest.java
+/app/src/test/java/com/jobdesk/service/MailScanServiceTest.java
+/app/src/test/java/com/jobdesk/service/ScraperServiceTest.java
+/app/src/test/java/com/jobdesk/web/ApplicationIntegrationTest.java
+/app/src/test/java/com/jobdesk/web/RawQueryBracketsTest.java

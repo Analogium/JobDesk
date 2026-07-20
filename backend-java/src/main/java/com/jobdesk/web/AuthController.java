@@ -1,0 +1,90 @@
+package com.jobdesk.web;
+
+import com.jobdesk.domain.User;
+import com.jobdesk.repository.UserRepository;
+import com.jobdesk.security.GoogleOAuthService;
+import com.jobdesk.security.GoogleOAuthService.GoogleTokenResponse;
+import com.jobdesk.security.GoogleOAuthService.GoogleUserInfo;
+import com.jobdesk.security.JwtService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.net.URI;
+import java.util.List;
+
+/**
+ * Login Google → JWT, remplaçant {@code SecurityController} + {@code GoogleAuthenticator}.
+ * Le frontend ouvre {@code /auth/google} puis récupère le token sur
+ * {@code FRONTEND_URL/auth/callback?token=...}.
+ */
+@RestController
+@RequestMapping("/auth")
+public class AuthController {
+
+    private final GoogleOAuthService google;
+    private final UserRepository userRepository;
+    private final JwtService jwtService;
+    private final String backendUrl;
+    private final String frontendUrl;
+
+    public AuthController(GoogleOAuthService google, UserRepository userRepository, JwtService jwtService,
+                          @Value("${app.backend-url}") String backendUrl,
+                          @Value("${app.frontend-url}") String frontendUrl) {
+        this.google = google;
+        this.userRepository = userRepository;
+        this.jwtService = jwtService;
+        this.backendUrl = backendUrl;
+        this.frontendUrl = frontendUrl;
+    }
+
+    @GetMapping("/google")
+    public ResponseEntity<Void> connectGoogle() {
+        String url = google.authorizationUrl(
+                redirectUri(),
+                List.of("openid", "email", "profile"),
+                "login",
+                null,
+                null);
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(url)).build();
+    }
+
+    @GetMapping("/google/check")
+    @Transactional
+    public ResponseEntity<Void> connectGoogleCheck(
+            @RequestParam(required = false) String code,
+            @RequestParam(required = false) String error) {
+        if (error != null || code == null) {
+            return redirect(frontendUrl + "/auth/login?error=google");
+        }
+        try {
+            GoogleTokenResponse token = google.exchangeCode(code, redirectUri());
+            GoogleUserInfo info = google.fetchUserInfo(token.accessToken());
+
+            User user = userRepository.findByEmail(info.email()).orElseGet(User::new);
+            user.setEmail(info.email());
+            user.setName(info.name() != null ? info.name() : info.email());
+            user.setAvatarUrl(info.picture());
+            user.setGoogleToken(token.accessToken());
+            user = userRepository.save(user);
+
+            String jwt = jwtService.generate(user);
+            return redirect(frontendUrl + "/auth/callback?token=" + jwt);
+        } catch (Exception e) {
+            return redirect(frontendUrl + "/auth/login?error=google");
+        }
+    }
+
+    private String redirectUri() {
+        return backendUrl + "/auth/google/check";
+    }
+
+    private ResponseEntity<Void> redirect(String url) {
+        return ResponseEntity.status(HttpStatus.FOUND).location(URI.create(url)).build();
+    }
+}

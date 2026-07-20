@@ -9,7 +9,7 @@ export function useApi() {
     const url = `${config.public.apiUrl}${path}`
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'Accept': 'application/ld+json',
+      'Accept': 'application/json',
       ...(options.headers as Record<string, string> ?? {}),
     }
 
@@ -27,7 +27,7 @@ export function useApi() {
 
     if (!res.ok) {
       const body = await res.json().catch(() => ({}))
-      throw new Error(body['hydra:description'] ?? body.message ?? body.error ?? `HTTP ${res.status}`)
+      throw new Error(body.message ?? body.error ?? `HTTP ${res.status}`)
     }
 
     if (res.status === 204) return undefined as T

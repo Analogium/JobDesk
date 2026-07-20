@@ -7,11 +7,15 @@ services:
     networks:
       - internal
 
+  # Ancien backend Symfony — CONSERVÉ mais non démarré par défaut (profil "legacy").
+  # Pour le relancer en secours :  docker compose --profile legacy up -d backend nginx
+  # (⚠️ il écoute aussi sur 8000 via nginx : arrêter backend-java avant.)
   backend:
     build:
       context: ./backend
       target: dev
     container_name: jobdesk_backend
+    profiles: ["legacy"]
     restart: unless-stopped
     volumes:
       - ./backend:/var/www/html
@@ -36,9 +40,11 @@ services:
       playwright:
         condition: service_started
 
+  # Sert l'ancien backend PHP-FPM — conservé avec lui derrière le profil "legacy".
   nginx:
     image: nginx:alpine
     container_name: jobdesk_nginx
+    profiles: ["legacy"]
     restart: unless-stopped
     ports:
       - "8000:80"
@@ -49,6 +55,37 @@ services:
       - internal
     depends_on:
       - backend
+
+  # Backend Spring Boot — backend PAR DÉFAUT (démarre avec `docker compose up`).
+  # Écoute sur http://localhost:8000 et partage la base postgres.
+  backend-java:
+    build:
+      context: ./backend-java
+    container_name: jobdesk_backend_java
+    restart: unless-stopped
+    ports:
+      # Sur le port 8000 : remplace l'ancien backend. Le frontend (NUXT_PUBLIC_API_URL=
+      # http://localhost:8000) et le redirect Google (localhost:8000/auth/google/check,
+      # déjà enregistré) fonctionnent sans autre changement.
+      - "8000:8080"
+    environment:
+      DATABASE_URL: "jdbc:postgresql://postgres:5432/jobdesk"
+      DATABASE_USER: jobdesk
+      DATABASE_PASSWORD: jobdesk
+      APP_SECRET: ${APP_SECRET:-change_me_generate_a_32_char_secret}
+      # JWT_SECRET non défini volontairement : l'app signe les JWT avec APP_SECRET par défaut.
+      # (Ne pas passer une valeur vide ici : Spring l'interpréterait comme un secret vide.)
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      FRONTEND_URL: http://localhost:3000
+      BACKEND_URL: http://localhost:8000
+      CORS_ALLOW_ORIGIN: http://localhost:3000
+      PLAYWRIGHT_URL: http://playwright:3001
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   frontend:
     build:

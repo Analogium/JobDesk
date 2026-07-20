@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: jobdesk-backend
+
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://postgres:5432/jobdesk}
+    username: ${DATABASE_USER:jobdesk}
+    password: ${DATABASE_PASSWORD:jobdesk}
+
+  jpa:
+    hibernate:
+      # Le schéma existe déjà (créé par Doctrine) — on ne fait que le VALIDER.
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+
+  flyway:
+    enabled: true
+    # Le schéma existant est adopté comme baseline : aucune table n'est recréée.
+    baseline-on-migrate: true
+    baseline-version: 0
+    # Ignore la table de migration Doctrine laissée en place.
+    validate-on-migrate: false
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+  tomcat:
+    # Le frontend envoie des params non encodés type order[createdAt]=desc.
+    # Tomcat rejette [ ] par défaut (400) → on les autorise dans la query string.
+    relaxed-query-chars: "[,]"
+
+app:
+  # Clé de chiffrement AES-256-GCM des tokens Gmail — DOIT être identique à l'APP_SECRET
+  # de l'ancien backend Symfony pour déchiffrer les données existantes.
+  encryption-secret: ${APP_SECRET:change_me_generate_a_32_char_secret}
+  jwt:
+    # HS256. Par défaut on réutilise APP_SECRET ; overridable via JWT_SECRET.
+    secret: ${JWT_SECRET:${APP_SECRET:change_me_generate_a_32_char_secret}}
+    ttl-seconds: 3600
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  backend-url: ${BACKEND_URL:http://localhost:8080}
+  cors-allow-origin: ${CORS_ALLOW_ORIGIN:http://localhost:3000}
+  # Microservice de rendu headless (repli anti-bot/SPA du scraper). Vide = désactivé.
+  playwright-url: ${PLAYWRIGHT_URL:}
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+
+logging:
+  level:
+    org.hibernate.tool.schema: warn

@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:jobdesk;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+  flyway:
+    enabled: false
+
+app:
+  encryption-secret: change_me_generate_a_32_char_secret
+  jwt:
+    secret: test_jwt_secret_at_least_32_characters_long
+    ttl-seconds: 3600
+  frontend-url: http://localhost:3000
+  backend-url: http://localhost:8080
+  cors-allow-origin: http://localhost:3000
+  google:
+    client-id: test-client-id
+    client-secret: test-client-secret

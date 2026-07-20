@@ -12,8 +12,20 @@ export const useApplicationsStore = defineStore('applications', () => {
     loading.value = true
     error.value = null
     try {
-      const data = await apiFetch<{ member: Application[] }>('/api/applications?order[createdAt]=desc')
-      applications.value = data['member']
+      const all: Application[] = []
+      let page = 1
+      let total = Infinity
+      // API Platform pagine par 30 : on boucle sur toutes les pages pour tout charger
+      while (all.length < total) {
+        const data = await apiFetch<{ member: Application[]; totalItems?: number }>(
+          `/api/applications?order[createdAt]=desc&page=${page}`,
+        )
+        total = data.totalItems ?? data.member.length
+        all.push(...data.member)
+        if (!data.member.length) break
+        page++
+      }
+      applications.value = all
     } catch (e: any) {
       error.value = e.message
     } finally {
