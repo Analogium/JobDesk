@@ -52,7 +52,7 @@ describe('useApplicationsStore', () => {
     expect(store.applications).toEqual(apps)
     expect(store.loading).toBe(false)
     expect(store.error).toBeNull()
-    expect(mockApiFetch).toHaveBeenCalledWith('/api/applications?order[createdAt]=desc')
+    expect(mockApiFetch).toHaveBeenCalledWith('/api/applications?order[createdAt]=desc&page=1')
   })
 
   it('fetchAll sets error on failure', async () => {

@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BACKEND_CONTAINER="jobdesk_backend"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 FRONTEND_CONTAINER="jobdesk_frontend"
+MAVEN_IMAGE="maven:3.9-eclipse-temurin-21"
+M2_VOLUME="jobdesk_m2"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -17,17 +19,17 @@ info() { echo -e "${CYAN}▶ $*${RESET}"; }
 BACKEND_STATUS=0
 FRONTEND_STATUS=0
 
-# ── Backend ───────────────────────────────────────────────────────────────────
+# ── Backend Java — JUnit (H2, aucune dépendance externe) ──────────────────────
 echo ""
-info "Backend — PHPUnit (SQLite)"
+info "Backend — JUnit / Maven (Java 21, H2)"
 echo "────────────────────────────────────────"
 
-if ! docker inspect "$BACKEND_CONTAINER" &>/dev/null; then
-  fail "Container '$BACKEND_CONTAINER' not found. Run: docker compose up -d"
-  exit 1
-fi
-
-docker exec "$BACKEND_CONTAINER" php bin/phpunit --no-coverage || BACKEND_STATUS=$?
+docker volume create "$M2_VOLUME" >/dev/null
+docker run --rm \
+  -v "$ROOT/backend-java":/app \
+  -v "$M2_VOLUME":/root/.m2 \
+  -w /app \
+  "$MAVEN_IMAGE" mvn -B test || BACKEND_STATUS=$?
 
 if [ $BACKEND_STATUS -eq 0 ]; then
   pass "Backend tests passed"
@@ -35,7 +37,7 @@ else
   fail "Backend tests failed"
 fi
 
-# ── Frontend ──────────────────────────────────────────────────────────────────
+# ── Frontend — Vitest ─────────────────────────────────────────────────────────
 echo ""
 info "Frontend — Vitest"
 echo "────────────────────────────────────────"

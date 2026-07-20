@@ -1,0 +1,13 @@
+# Build Maven
+target/
+
+# Java
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Logs
+*.log

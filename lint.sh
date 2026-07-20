@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BACKEND_CONTAINER="jobdesk_backend"
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 FRONTEND_CONTAINER="jobdesk_frontend"
+MAVEN_IMAGE="maven:3.9-eclipse-temurin-21"
+M2_VOLUME="jobdesk_m2"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -19,49 +21,29 @@ if [[ "${1:-}" == "--fix" ]]; then
   FIX_MODE=1
 fi
 
-CS_STATUS=0
-PHPSTAN_STATUS=0
+COMPILE_STATUS=0
 ESLINT_STATUS=0
 
-# ── PHP CS Fixer ──────────────────────────────────────────────────────────────
+# ── Backend Java — vérification de compilation ────────────────────────────────
+# (Aucun formateur Java configuré ; la compilation sert de garde-fou statique.)
 echo ""
-info "Backend — PHP CS Fixer"
+info "Backend — compilation Java (Maven)"
 echo "────────────────────────────────────────"
 
-if ! docker inspect "$BACKEND_CONTAINER" &>/dev/null; then
-  fail "Container '$BACKEND_CONTAINER' not found. Run: docker compose up -d"
-  exit 1
-fi
+docker volume create "$M2_VOLUME" >/dev/null
+docker run --rm \
+  -v "$ROOT/backend-java":/app \
+  -v "$M2_VOLUME":/root/.m2 \
+  -w /app \
+  "$MAVEN_IMAGE" mvn -B -q -DskipTests compile || COMPILE_STATUS=$?
 
-if [[ $FIX_MODE -eq 1 ]]; then
-  docker exec "$BACKEND_CONTAINER" composer lint:fix || CS_STATUS=$?
+if [ $COMPILE_STATUS -eq 0 ]; then
+  pass "Compilation Java OK"
 else
-  docker exec "$BACKEND_CONTAINER" composer lint || CS_STATUS=$?
+  fail "Compilation Java échouée"
 fi
 
-if [ $CS_STATUS -eq 0 ]; then
-  pass "PHP CS Fixer OK"
-else
-  fail "PHP CS Fixer found issues (run ./lint.sh --fix to auto-correct)"
-fi
-
-# ── PHPStan ───────────────────────────────────────────────────────────────────
-echo ""
-info "Backend — PHPStan (level 5)"
-echo "────────────────────────────────────────"
-
-# Ensure the test container XML exists for PHPStan's Symfony extension
-docker exec "$BACKEND_CONTAINER" php bin/console cache:warmup --env=test -q
-
-docker exec "$BACKEND_CONTAINER" composer phpstan || PHPSTAN_STATUS=$?
-
-if [ $PHPSTAN_STATUS -eq 0 ]; then
-  pass "PHPStan OK"
-else
-  fail "PHPStan found issues"
-fi
-
-# ── ESLint ────────────────────────────────────────────────────────────────────
+# ── Frontend — ESLint ─────────────────────────────────────────────────────────
 echo ""
 info "Frontend — ESLint"
 echo "────────────────────────────────────────"
@@ -86,7 +68,7 @@ fi
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo "════════════════════════════════════════"
-if [ $CS_STATUS -eq 0 ] && [ $PHPSTAN_STATUS -eq 0 ] && [ $ESLINT_STATUS -eq 0 ]; then
+if [ $COMPILE_STATUS -eq 0 ] && [ $ESLINT_STATUS -eq 0 ]; then
   pass "All lint checks passed"
   exit 0
 else

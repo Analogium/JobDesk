@@ -11,7 +11,9 @@ echo "║         Pre-push checks              ║"
 echo "╚══════════════════════════════════════╝"
 
 # ── S'assurer que les containers tournent ─────────────────────────────────────
-CONTAINERS=(jobdesk_backend jobdesk_frontend)
+# Frontend requis pour ESLint/Vitest. Le backend Java est testé via une image
+# Maven jetable (lint.sh / test.sh) — pas besoin de son container ici.
+CONTAINERS=(jobdesk_frontend)
 NEEDS_START=0
 
 for c in "${CONTAINERS[@]}"; do

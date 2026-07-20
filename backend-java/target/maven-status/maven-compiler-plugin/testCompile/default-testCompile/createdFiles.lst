@@ -1,7 +1,0 @@
-com/jobdesk/web/ApplicationIntegrationTest.class
-com/jobdesk/domain/UserTokenPreservationTest.class
-com/jobdesk/security/GoogleOAuthServiceTest.class
-com/jobdesk/domain/converter/EncryptedStringConverterTest.class
-com/jobdesk/web/RawQueryBracketsTest.class
-com/jobdesk/service/MailScanServiceTest.class
-com/jobdesk/service/ScraperServiceTest.class
