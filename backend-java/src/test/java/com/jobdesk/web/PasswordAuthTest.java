@@ -1,6 +1,7 @@
 package com.jobdesk.web;
 
 import com.jobdesk.domain.User;
+import com.jobdesk.repository.ApplicationRepository;
 import com.jobdesk.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,10 +32,15 @@ class PasswordAuthTest {
     @Autowired
     UserRepository userRepository;
     @Autowired
+    ApplicationRepository applicationRepository;
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp() {
+        // Dans l'ordre des dépendances : la base H2 est partagée par toutes les classes de
+        // test, et les candidatures laissées par une classe précédente référencent des users.
+        applicationRepository.deleteAll();
         userRepository.deleteAll();
     }
 

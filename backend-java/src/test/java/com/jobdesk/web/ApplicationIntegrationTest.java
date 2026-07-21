@@ -2,6 +2,7 @@ package com.jobdesk.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jobdesk.domain.User;
+import com.jobdesk.repository.ApplicationRepository;
 import com.jobdesk.repository.UserRepository;
 import com.jobdesk.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +31,8 @@ class ApplicationIntegrationTest {
     @Autowired
     UserRepository userRepository;
     @Autowired
+    ApplicationRepository applicationRepository;
+    @Autowired
     JwtService jwtService;
     @Autowired
     ObjectMapper objectMapper;
@@ -38,6 +41,9 @@ class ApplicationIntegrationTest {
 
     @BeforeEach
     void setUp() {
+        // Base H2 partagée entre classes de test : nettoyer dans l'ordre des dépendances,
+        // sinon la suppression des users viole la clé étrangère de `application`.
+        applicationRepository.deleteAll();
         userRepository.deleteAll();
         User user = new User();
         user.setEmail("alice@example.com");
