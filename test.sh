@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 FRONTEND_CONTAINER="jobdesk_frontend"
 MAVEN_IMAGE="maven:3.9-eclipse-temurin-21"
-M2_VOLUME="jobdesk_m2"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -24,12 +23,16 @@ echo ""
 info "Backend — JUnit / Maven (Java 21, H2)"
 echo "────────────────────────────────────────"
 
-docker volume create "$M2_VOLUME" >/dev/null
+# --user : sans ça le conteneur écrit target/ en root, et le Maven de l'IDE (m2e),
+# qui tourne sous l'utilisateur courant, ne peut plus y écrire ("Operation not permitted").
+# Le dépôt Maven de l'hôte (~/.m2) est réutilisé : cache partagé avec l'IDE.
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp \
   -v "$ROOT/backend-java":/app \
-  -v "$M2_VOLUME":/root/.m2 \
+  -v "$HOME/.m2":/m2 \
   -w /app \
-  "$MAVEN_IMAGE" mvn -B test || BACKEND_STATUS=$?
+  "$MAVEN_IMAGE" mvn -B -Dmaven.repo.local=/m2 test || BACKEND_STATUS=$?
 
 if [ $BACKEND_STATUS -eq 0 ]; then
   pass "Backend tests passed"

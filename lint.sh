@@ -4,7 +4,6 @@ set -euo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 FRONTEND_CONTAINER="jobdesk_frontend"
 MAVEN_IMAGE="maven:3.9-eclipse-temurin-21"
-M2_VOLUME="jobdesk_m2"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -30,12 +29,14 @@ echo ""
 info "Backend — compilation Java (Maven)"
 echo "────────────────────────────────────────"
 
-docker volume create "$M2_VOLUME" >/dev/null
+# --user : évite que target/ soit créé en root (l'IDE ne pourrait plus y écrire).
 docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e HOME=/tmp \
   -v "$ROOT/backend-java":/app \
-  -v "$M2_VOLUME":/root/.m2 \
+  -v "$HOME/.m2":/m2 \
   -w /app \
-  "$MAVEN_IMAGE" mvn -B -q -DskipTests compile || COMPILE_STATUS=$?
+  "$MAVEN_IMAGE" mvn -B -q -DskipTests -Dmaven.repo.local=/m2 compile || COMPILE_STATUS=$?
 
 if [ $COMPILE_STATUS -eq 0 ]; then
   pass "Compilation Java OK"
