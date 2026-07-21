@@ -157,7 +157,7 @@ API REST JSON. Toutes les routes `/api/**` nécessitent un JWT (`Authorization: 
 |---|---|---|
 | `/auth/register` | POST | Inscription email + mot de passe → `{ token, user }` |
 | `/auth/login` | POST | Connexion email + mot de passe → `{ token, user }` |
-| `/auth/password/forgot` | POST | Envoie un lien de réinitialisation (204 même si l'email est inconnu) |
+| `/auth/password/forgot` | POST | Envoie un lien de réinitialisation (204 même si l'email est inconnu, 429 au-delà de 3 demandes / 15 min) |
 | `/auth/password/reset` | POST | Définit un nouveau mot de passe à partir du token du lien |
 | `/auth/google` | GET | Démarre le login Google (→ redirige vers `/auth/callback?token=`) |
 | `/api/me` | GET | Profil de l'utilisateur connecté |

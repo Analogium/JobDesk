@@ -3,6 +3,7 @@ package com.jobdesk.web;
 import com.jobdesk.domain.User;
 import com.jobdesk.repository.ApplicationRepository;
 import com.jobdesk.repository.UserRepository;
+import com.jobdesk.security.RateLimiter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,9 +36,14 @@ class PasswordAuthTest {
     ApplicationRepository applicationRepository;
     @Autowired
     PasswordEncoder passwordEncoder;
+    @Autowired
+    RateLimiter rateLimiter;
 
     @BeforeEach
     void setUp() {
+        // Singleton partagé entre classes de test : sans remise à zéro, les tentatives
+        // de connexion s'accumulent et finiraient par être rejetées en 429.
+        rateLimiter.clear();
         // Dans l'ordre des dépendances : la base H2 est partagée par toutes les classes de
         // test, et les candidatures laissées par une classe précédente référencent des users.
         applicationRepository.deleteAll();
@@ -163,6 +169,24 @@ class PasswordAuthTest {
         mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content(json("google@example.com", null, "any-password")))
                 .andExpect(status().isUnauthorized());
+    }
+
+    /** Freine le bourrinage : au-delà de 10 tentatives sur la même adresse, on refuse. */
+    @Test
+    void repeatedFailedLoginsAreThrottled() throws Exception {
+        mvc.perform(post("/auth/register").contentType(MediaType.APPLICATION_JSON)
+                .content(json("alice@example.com", "Alice", "correct-horse")));
+
+        for (int i = 0; i < 10; i++) {
+            mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                            .content(json("alice@example.com", null, "wrong-password")))
+                    .andExpect(status().isUnauthorized());
+        }
+
+        // Même avec le BON mot de passe : le quota est atteint.
+        mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content(json("alice@example.com", null, "correct-horse")))
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test

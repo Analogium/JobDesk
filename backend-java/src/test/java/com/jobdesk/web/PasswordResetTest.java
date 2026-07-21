@@ -5,6 +5,7 @@ import com.jobdesk.domain.User;
 import com.jobdesk.repository.ApplicationRepository;
 import com.jobdesk.repository.PasswordResetTokenRepository;
 import com.jobdesk.repository.UserRepository;
+import com.jobdesk.security.RateLimiter;
 import com.jobdesk.service.MailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,6 +49,9 @@ class PasswordResetTest {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    RateLimiter rateLimiter;
+
     @MockitoBean
     MailService mailService;
 
@@ -56,6 +60,9 @@ class PasswordResetTest {
         tokenRepository.deleteAll();
         applicationRepository.deleteAll();
         userRepository.deleteAll();
+        // Le limiteur est un singleton partagé par toutes les classes de test : sans
+        // remise à zéro, les demandes s'accumulent et finissent par être rejetées en 429.
+        rateLimiter.clear();
     }
 
     private User givenUserWithPassword(String email, String password) {
@@ -184,6 +191,41 @@ class PasswordResetTest {
 
         User updated = userRepository.findByEmail("google@example.com").orElseThrow();
         assertThat(passwordEncoder.matches("mon-nouveau-mdp", updated.getPasswordHash())).isTrue();
+    }
+
+    /**
+     * Sans plafond, rejouer la demande en boucle viderait le quota d'envoi Brevo
+     * et inonderait la boîte de la victime.
+     */
+    @Test
+    void repeatedRequestsForTheSameAddressAreThrottled() throws Exception {
+        givenUserWithPassword("alice@example.com", "ancien-mot-de-passe");
+
+        forgot("alice@example.com");
+        forgot("alice@example.com");
+        forgot("alice@example.com");
+
+        mvc.perform(post("/auth/password/forgot").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email": "alice@example.com"}"""))
+                .andExpect(status().isTooManyRequests());
+
+        // Le 4e appel ne doit avoir déclenché aucun envoi supplémentaire.
+        verify(mailService, org.mockito.Mockito.times(3))
+                .sendPasswordReset(eq("alice@example.com"), anyString());
+    }
+
+    /** Le plafond s'applique avant la recherche en base : une adresse inconnue est limitée pareil. */
+    @Test
+    void throttlingDoesNotRevealWhetherTheAddressExists() throws Exception {
+        for (int i = 0; i < 3; i++) {
+            forgot("inconnu@example.com");
+        }
+
+        mvc.perform(post("/auth/password/forgot").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email": "inconnu@example.com"}"""))
+                .andExpect(status().isTooManyRequests());
     }
 
     @Test
