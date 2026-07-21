@@ -122,10 +122,7 @@ jobs:
           VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_USER: ${{ secrets.VPS_USER }}
         run: |
-          # CheckHostIP=no : known_hosts épingle le nom d'hôte, pas l'IP (qui peut varier).
-          ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" \
-              -o IdentitiesOnly=yes -o BatchMode=yes -o CheckHostIP=no \
-              "$VPS_USER@$VPS_HOST" 'bash -se' <<'REMOTE'
+          REMOTE_SCRIPT=$(cat <<'REMOTE'
           set -euo pipefail
 
           REPO=/home/lambert/apps/JobDesk
@@ -136,7 +133,7 @@ jobs:
           git fetch --prune origin
           # --ff-only : si le checkout du VPS a divergé (modif locale, hotfix),
           # le déploiement échoue bruyamment au lieu d'écraser silencieusement.
-          git -c advice.detachedHead=false pull --ff-only origin master
+          git pull --ff-only origin master
           echo "→ déployé : $(git rev-parse --short HEAD) $(git log -1 --pretty=%s)"
 
           cd "$STACK"
@@ -145,6 +142,25 @@ jobs:
           # Les anciennes images (une par build) rempliraient le disque du VPS.
           docker image prune -f
           REMOTE
+          )
+
+          # -4 : le runner GitHub n'a pas d'IPv6 globale alors que l'hôte publie un AAAA ;
+          #      sans ça, ssh peut s'obstiner sur l'adresse v6 et consommer tout le budget
+          #      de retransmission TCP (~2 min) avant d'échouer.
+          # ConnectTimeout : borne chaque tentative, sinon un échec coûte 2 min de runner.
+          # CheckHostIP=no : known_hosts épingle le nom d'hôte, pas l'IP (qui peut varier).
+          for attempt in 1 2 3; do
+            if printf '%s' "$REMOTE_SCRIPT" | ssh -4 -i ~/.ssh/deploy_key -p "$VPS_PORT" \
+                 -o IdentitiesOnly=yes -o BatchMode=yes -o CheckHostIP=no \
+                 -o ConnectTimeout=20 -o ServerAliveInterval=30 \
+                 "$VPS_USER@$VPS_HOST" 'bash -s'; then
+              exit 0
+            fi
+            echo "⚠️ tentative $attempt échouée"
+            if [ "$attempt" != 3 ]; then sleep 15; fi
+          done
+          echo "❌ impossible de déployer après 3 tentatives"
+          exit 1
 
       - name: Smoke test
         env:

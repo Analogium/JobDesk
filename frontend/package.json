@@ -19,6 +19,9 @@
     "@vueuse/nuxt": "^13.0.0",
     "pinia": "^3.0.1"
   },
+  "overrides": {
+    "nitropack": "2.13.4"
+  },
   "devDependencies": {
     "@nuxt/eslint": "^1.15.2",
     "@nuxt/test-utils": "^4.0.2",
