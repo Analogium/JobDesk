@@ -150,6 +150,55 @@ describe('useAuthStore', () => {
       expect(auth.isAuthenticated).toBe(false)
     })
 
+    it('forgotPassword posts the email and never opens a session', async () => {
+      const auth = useAuthStore()
+      // Le backend répond 204 sans corps : res.json() échoue, ce qui doit rester sans effet.
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => {
+          throw new Error('no content')
+        },
+      })
+
+      await auth.forgotPassword('alice@example.com')
+
+      expect(auth.token).toBeNull()
+      expect(auth.isAuthenticated).toBe(false)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/auth/password/forgot',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ email: 'alice@example.com' }),
+        }),
+      )
+    })
+
+    it('resetPassword posts the token and the new password', async () => {
+      const auth = useAuthStore()
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({}) })
+
+      await auth.resetPassword('a-token', 'nouveau-mot-de-passe')
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/auth/password/reset',
+        expect.objectContaining({
+          body: JSON.stringify({ token: 'a-token', password: 'nouveau-mot-de-passe' }),
+        }),
+      )
+    })
+
+    it('resetPassword surfaces an expired link message', async () => {
+      const auth = useAuthStore()
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ message: 'Ce lien de réinitialisation est invalide ou expiré.' }),
+      })
+
+      await expect(auth.resetPassword('vieux-token', 'nouveau-mot-de-passe')).rejects.toThrow(
+        'Ce lien de réinitialisation est invalide ou expiré.',
+      )
+    })
+
     it('falls back to a generic message when the API sends no body', async () => {
       const auth = useAuthStore()
       mockFetch.mockResolvedValueOnce({

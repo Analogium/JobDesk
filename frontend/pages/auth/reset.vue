@@ -1,32 +1,24 @@
 <template>
-  <AuthCard subtitle="Créez votre compte">
-    <form class="space-y-4" @submit.prevent="onSubmit">
-      <div>
-        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
-        <input
-          id="name"
-          v-model="name"
-          type="text"
-          required
-          autocomplete="name"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-        >
-      </div>
+  <AuthCard subtitle="Choisir un nouveau mot de passe">
+    <div v-if="!token" class="text-sm text-red-600">
+      Ce lien est incomplet. Refaites une demande depuis la page « mot de passe oublié ».
+    </div>
 
-      <div>
-        <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          required
-          autocomplete="email"
-          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
-        >
-      </div>
+    <div v-else-if="done" class="text-sm text-gray-600 space-y-4">
+      <p class="text-green-700">Votre mot de passe a été mis à jour.</p>
+      <NuxtLink
+        to="/auth/login"
+        class="block w-full text-center px-4 py-3 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors"
+      >
+        Se connecter
+      </NuxtLink>
+    </div>
 
+    <form v-else class="space-y-4" @submit.prevent="onSubmit">
       <div>
-        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">
+          Nouveau mot de passe
+        </label>
         <input
           id="password"
           v-model="password"
@@ -64,14 +56,13 @@
         :disabled="loading || mismatch"
         class="w-full px-4 py-3 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {{ loading ? 'Création…' : 'Créer mon compte' }}
+        {{ loading ? 'Enregistrement…' : 'Changer mon mot de passe' }}
       </button>
     </form>
 
     <template #footer>
-      Déjà un compte ?
       <NuxtLink to="/auth/login" class="text-brand-600 hover:text-brand-700 font-medium">
-        Se connecter
+        Retour à la connexion
       </NuxtLink>
     </template>
   </AuthCard>
@@ -81,16 +72,15 @@
 definePageMeta({ layout: false })
 
 const authStore = useAuthStore()
+const route = useRoute()
 
-const name = ref('')
-const email = ref('')
+const token = computed(() => (route.query.token as string | undefined) ?? '')
 const password = ref('')
 const passwordConfirm = ref('')
 const loading = ref(false)
+const done = ref(false)
 const error = ref('')
 
-// Signalé seulement une fois la confirmation commencée, pour ne pas afficher
-// une erreur dès le premier caractère saisi.
 const mismatch = computed(() => passwordConfirm.value !== '' && passwordConfirm.value !== password.value)
 
 async function onSubmit() {
@@ -98,8 +88,8 @@ async function onSubmit() {
   loading.value = true
   error.value = ''
   try {
-    await authStore.register(email.value, name.value, password.value)
-    await navigateTo('/')
+    await authStore.resetPassword(token.value, password.value)
+    done.value = true
   } catch (e) {
     error.value = (e as Error).message
   } finally {

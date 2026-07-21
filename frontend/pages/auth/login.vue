@@ -14,7 +14,12 @@
       </div>
 
       <div>
-        <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mot de passe</label>
+        <div class="flex items-baseline justify-between mb-1">
+          <label for="password" class="block text-sm font-medium text-gray-700">Mot de passe</label>
+          <NuxtLink to="/auth/forgot" class="text-xs text-brand-600 hover:text-brand-700">
+            Mot de passe oublié ?
+          </NuxtLink>
+        </div>
         <input
           id="password"
           v-model="password"

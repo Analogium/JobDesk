@@ -44,6 +44,15 @@ GOOGLE_CLIENT_SECRET=your_google_client_secret
 # ⚠️ À définir UNE fois avec une valeur forte, puis NE JAMAIS la changer
 # (sinon les tokens Gmail déjà stockés deviennent illisibles).
 APP_SECRET=une_valeur_forte_et_stable
+
+# Envoi des mails de réinitialisation (relais SMTP, Brevo en prod).
+# Facultatif en local : sans SMTP_HOST, le lien est écrit dans les logs du backend
+# au lieu d'être envoyé, ce qui suffit pour développer.
+SMTP_HOST=smtp-relay.brevo.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+EMAIL_FROM=expediteur_valide_chez_brevo@example.com
 ```
 
 ### 2. Démarrage
@@ -148,6 +157,8 @@ API REST JSON. Toutes les routes `/api/**` nécessitent un JWT (`Authorization: 
 |---|---|---|
 | `/auth/register` | POST | Inscription email + mot de passe → `{ token, user }` |
 | `/auth/login` | POST | Connexion email + mot de passe → `{ token, user }` |
+| `/auth/password/forgot` | POST | Envoie un lien de réinitialisation (204 même si l'email est inconnu) |
+| `/auth/password/reset` | POST | Définit un nouveau mot de passe à partir du token du lien |
 | `/auth/google` | GET | Démarre le login Google (→ redirige vers `/auth/callback?token=`) |
 | `/api/me` | GET | Profil de l'utilisateur connecté |
 | `/api/applications` | GET | Liste paginée `{ member, totalItems }` (filtres `status`, `source`, `contractType`, tri `order[...]`) |

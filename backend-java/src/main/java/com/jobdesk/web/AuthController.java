@@ -7,8 +7,11 @@ import com.jobdesk.security.GoogleOAuthService.GoogleTokenResponse;
 import com.jobdesk.security.GoogleOAuthService.GoogleUserInfo;
 import com.jobdesk.security.JwtService;
 import com.jobdesk.service.AccountService;
+import com.jobdesk.service.PasswordResetService;
+import com.jobdesk.web.dto.ForgotPasswordRequest;
 import com.jobdesk.web.dto.LoginRequest;
 import com.jobdesk.web.dto.RegisterRequest;
+import com.jobdesk.web.dto.ResetPasswordRequest;
 import com.jobdesk.web.dto.TokenResponse;
 import com.jobdesk.web.dto.UserDto;
 import jakarta.validation.Valid;
@@ -39,17 +42,19 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtService jwtService;
     private final AccountService accountService;
+    private final PasswordResetService passwordResetService;
     private final String backendUrl;
     private final String frontendUrl;
 
     public AuthController(GoogleOAuthService google, UserRepository userRepository, JwtService jwtService,
-                          AccountService accountService,
+                          AccountService accountService, PasswordResetService passwordResetService,
                           @Value("${app.backend-url}") String backendUrl,
                           @Value("${app.frontend-url}") String frontendUrl) {
         this.google = google;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.accountService = accountService;
+        this.passwordResetService = passwordResetService;
         this.backendUrl = backendUrl;
         this.frontendUrl = frontendUrl;
     }
@@ -65,6 +70,22 @@ public class AuthController {
     public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
         User user = accountService.authenticate(request);
         return ResponseEntity.ok(tokenFor(user));
+    }
+
+    /**
+     * Répond 204 même si l'adresse est inconnue : une réponse différente permettrait
+     * de savoir quelles adresses ont un compte.
+     */
+    @PostMapping("/password/forgot")
+    public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.reset(request.token(), request.password());
+        return ResponseEntity.noContent().build();
     }
 
     private TokenResponse tokenFor(User user) {

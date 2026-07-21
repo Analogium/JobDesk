@@ -31,7 +31,7 @@ export const useAuthStore = defineStore('auth', () => {
    * intercepteur 401 déclenche un logout + redirection, alors qu'un 401 signifie
    * simplement « identifiants incorrects » et doit remonter au formulaire.
    */
-  async function authRequest(path: string, body: Record<string, string>) {
+  async function postJson(path: string, body: Record<string, string>) {
     const config = useRuntimeConfig()
     const res = await fetch(`${config.public.apiUrl}${path}`, {
       method: 'POST',
@@ -43,7 +43,12 @@ export const useAuthStore = defineStore('auth', () => {
     if (!res.ok) {
       throw new Error(data.message ?? 'Une erreur est survenue, réessayez.')
     }
+    return data
+  }
 
+  /** Ouvre la session à partir d'une réponse `{ token, user }`. */
+  async function authRequest(path: string, body: Record<string, string>) {
+    const data = await postJson(path, body)
     token.value = data.token
     user.value = data.user
   }
@@ -54,6 +59,18 @@ export const useAuthStore = defineStore('auth', () => {
 
   function register(email: string, name: string, password: string) {
     return authRequest('/auth/register', { email, name, password })
+  }
+
+  /**
+   * Réussit toujours, même si l'adresse est inconnue : le backend répond 204 dans
+   * les deux cas pour ne pas révéler quelles adresses ont un compte.
+   */
+  function forgotPassword(email: string) {
+    return postJson('/auth/password/forgot', { email })
+  }
+
+  function resetPassword(resetToken: string, password: string) {
+    return postJson('/auth/password/reset', { token: resetToken, password })
   }
 
   async function fetchMe() {
@@ -73,7 +90,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { token, user, isAuthenticated, setToken, logout, login, register, fetchMe }
+  return {
+    token,
+    user,
+    isAuthenticated,
+    setToken,
+    logout,
+    login,
+    register,
+    forgotPassword,
+    resetPassword,
+    fetchMe,
+  }
 }, {
   persist: false,
 })
