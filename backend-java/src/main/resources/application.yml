@@ -19,9 +19,11 @@ spring:
 
   flyway:
     enabled: true
-    # Le schéma existant est adopté comme baseline : aucune table n'est recréée.
+    # Base VIERGE (prod) : V1__init_schema.sql crée le schéma.
+    # Base DÉJÀ peuplée (dev, héritée de Doctrine) : baselinée à la version 1,
+    # donc V1 est considéré comme déjà appliqué et n'est PAS rejoué (données préservées).
     baseline-on-migrate: true
-    baseline-version: 0
+    baseline-version: 1
     # Ignore la table de migration Doctrine laissée en place.
     validate-on-migrate: false
 
