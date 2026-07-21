@@ -26,6 +26,36 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
   }
 
+  /**
+   * Inscription et connexion par mot de passe. On n'utilise pas `useApi` ici : son
+   * intercepteur 401 déclenche un logout + redirection, alors qu'un 401 signifie
+   * simplement « identifiants incorrects » et doit remonter au formulaire.
+   */
+  async function authRequest(path: string, body: Record<string, string>) {
+    const config = useRuntimeConfig()
+    const res = await fetch(`${config.public.apiUrl}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(body),
+    })
+
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) {
+      throw new Error(data.message ?? 'Une erreur est survenue, réessayez.')
+    }
+
+    token.value = data.token
+    user.value = data.user
+  }
+
+  function login(email: string, password: string) {
+    return authRequest('/auth/login', { email, password })
+  }
+
+  function register(email: string, name: string, password: string) {
+    return authRequest('/auth/register', { email, name, password })
+  }
+
   async function fetchMe() {
     if (!token.value) return
     const config = useRuntimeConfig()
@@ -43,7 +73,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { token, user, isAuthenticated, setToken, logout, fetchMe }
+  return { token, user, isAuthenticated, setToken, logout, login, register, fetchMe }
 }, {
   persist: false,
 })

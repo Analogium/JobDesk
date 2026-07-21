@@ -13,7 +13,7 @@ Application web fullstack de suivi de candidatures. Gestion du cycle de vie (sta
 | Frontend | Nuxt 3 · TypeScript · Tailwind CSS |
 | Backend | **Spring Boot 3.4 · Java 21** (Tomcat embarqué) |
 | Base de données | PostgreSQL 15 |
-| Auth | Google OAuth 2.0 · JWT (HS256, jjwt) |
+| Auth | Email + mot de passe (BCrypt) · Google OAuth 2.0 · JWT (HS256, jjwt) |
 | Rendu headless | Microservice Playwright (repli du scraper) |
 | Infrastructure | Docker · Docker Compose |
 | CI/CD | GitHub Actions |
@@ -146,6 +146,8 @@ API REST JSON. Toutes les routes `/api/**` nécessitent un JWT (`Authorization: 
 
 | Endpoint | Méthode | Description |
 |---|---|---|
+| `/auth/register` | POST | Inscription email + mot de passe → `{ token, user }` |
+| `/auth/login` | POST | Connexion email + mot de passe → `{ token, user }` |
 | `/auth/google` | GET | Démarre le login Google (→ redirige vers `/auth/callback?token=`) |
 | `/api/me` | GET | Profil de l'utilisateur connecté |
 | `/api/applications` | GET | Liste paginée `{ member, totalItems }` (filtres `status`, `source`, `contractType`, tri `order[...]`) |

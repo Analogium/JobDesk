@@ -35,6 +35,10 @@ public class User {
     @Column(length = 500)
     private String avatarUrl;
 
+    /** Hash BCrypt. Null pour les comptes créés via Google : ils n'ont pas de mot de passe. */
+    @Column(length = 255)
+    private String passwordHash;
+
     @Column(columnDefinition = "text")
     private String googleToken;
 
@@ -97,6 +101,14 @@ public class User {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 
     public String getGoogleToken() {

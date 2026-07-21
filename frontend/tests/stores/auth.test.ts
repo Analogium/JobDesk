@@ -87,4 +87,81 @@ describe('useAuthStore', () => {
     await auth.fetchMe()
     expect(mockFetch).not.toHaveBeenCalled()
   })
+
+  describe('email + password', () => {
+    const fakeUser = { id: '1', email: 'alice@example.com', name: 'Alice' }
+
+    it('login stores the token and the user returned by the API', async () => {
+      const auth = useAuthStore()
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ token: 'jwt-from-login', user: fakeUser }),
+      })
+
+      await auth.login('alice@example.com', 'correct-horse')
+
+      expect(auth.token).toBe('jwt-from-login')
+      expect(auth.user).toEqual(fakeUser)
+      expect(auth.isAuthenticated).toBe(true)
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/auth/login',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ email: 'alice@example.com', password: 'correct-horse' }),
+        }),
+      )
+    })
+
+    it('register posts the name too and stores the token', async () => {
+      const auth = useAuthStore()
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ token: 'jwt-from-register', user: fakeUser }),
+      })
+
+      await auth.register('alice@example.com', 'Alice', 'correct-horse')
+
+      expect(auth.token).toBe('jwt-from-register')
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/auth/register',
+        expect.objectContaining({
+          body: JSON.stringify({
+            email: 'alice@example.com',
+            name: 'Alice',
+            password: 'correct-horse',
+          }),
+        }),
+      )
+    })
+
+    // Un 401 ici veut dire « identifiants incorrects » : il doit remonter au
+    // formulaire, surtout pas déconnecter ni rediriger.
+    it('login surfaces the API message and leaves the session untouched', async () => {
+      const auth = useAuthStore()
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ message: 'Email ou mot de passe incorrect' }),
+      })
+
+      await expect(auth.login('alice@example.com', 'wrong')).rejects.toThrow(
+        'Email ou mot de passe incorrect',
+      )
+      expect(auth.token).toBeNull()
+      expect(auth.isAuthenticated).toBe(false)
+    })
+
+    it('falls back to a generic message when the API sends no body', async () => {
+      const auth = useAuthStore()
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => {
+          throw new Error('not json')
+        },
+      })
+
+      await expect(auth.register('a@b.com', 'A', 'password123')).rejects.toThrow(
+        'Une erreur est survenue, réessayez.',
+      )
+    })
+  })
 })

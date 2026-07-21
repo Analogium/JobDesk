@@ -11,7 +11,8 @@ export default defineNuxtRouteMiddleware((to) => {
     return navigateTo('/auth/login')
   }
 
-  if (authStore.isAuthenticated && to.path === '/auth/login') {
+  // `/auth/callback` est exclu : il doit pouvoir poser le token puis rediriger lui-même.
+  if (authStore.isAuthenticated && ['/auth/login', '/auth/register'].includes(to.path)) {
     return navigateTo('/')
   }
 })

@@ -6,11 +6,19 @@ import com.jobdesk.security.GoogleOAuthService;
 import com.jobdesk.security.GoogleOAuthService.GoogleTokenResponse;
 import com.jobdesk.security.GoogleOAuthService.GoogleUserInfo;
 import com.jobdesk.security.JwtService;
+import com.jobdesk.service.AccountService;
+import com.jobdesk.web.dto.LoginRequest;
+import com.jobdesk.web.dto.RegisterRequest;
+import com.jobdesk.web.dto.TokenResponse;
+import com.jobdesk.web.dto.UserDto;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,17 +38,37 @@ public class AuthController {
     private final GoogleOAuthService google;
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final AccountService accountService;
     private final String backendUrl;
     private final String frontendUrl;
 
     public AuthController(GoogleOAuthService google, UserRepository userRepository, JwtService jwtService,
+                          AccountService accountService,
                           @Value("${app.backend-url}") String backendUrl,
                           @Value("${app.frontend-url}") String frontendUrl) {
         this.google = google;
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.accountService = accountService;
         this.backendUrl = backendUrl;
         this.frontendUrl = frontendUrl;
+    }
+
+    /** Inscription email + mot de passe. Renvoie directement un JWT : pas d'étape de vérification. */
+    @PostMapping("/register")
+    public ResponseEntity<TokenResponse> register(@Valid @RequestBody RegisterRequest request) {
+        User user = accountService.register(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(tokenFor(user));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
+        User user = accountService.authenticate(request);
+        return ResponseEntity.ok(tokenFor(user));
+    }
+
+    private TokenResponse tokenFor(User user) {
+        return new TokenResponse(jwtService.generate(user), UserDto.from(user));
     }
 
     @GetMapping("/google")

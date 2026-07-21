@@ -1,6 +1,18 @@
 <template>
-  <AuthCard subtitle="Suivi intelligent de candidatures">
+  <AuthCard subtitle="Créez votre compte">
     <form class="space-y-4" @submit.prevent="onSubmit">
+      <div>
+        <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+        <input
+          id="name"
+          v-model="name"
+          type="text"
+          required
+          autocomplete="name"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+        >
+      </div>
+
       <div>
         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
         <input
@@ -20,9 +32,11 @@
           v-model="password"
           type="password"
           required
-          autocomplete="current-password"
+          minlength="8"
+          autocomplete="new-password"
           class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
         >
+        <p class="text-xs text-gray-400 mt-1">8 caractères minimum</p>
       </div>
 
       <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
@@ -32,14 +46,14 @@
         :disabled="loading"
         class="w-full px-4 py-3 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {{ loading ? 'Connexion…' : 'Se connecter' }}
+        {{ loading ? 'Création…' : 'Créer mon compte' }}
       </button>
     </form>
 
     <template #footer>
-      Pas encore de compte ?
-      <NuxtLink to="/auth/register" class="text-brand-600 hover:text-brand-700 font-medium">
-        Créer un compte
+      Déjà un compte ?
+      <NuxtLink to="/auth/login" class="text-brand-600 hover:text-brand-700 font-medium">
+        Se connecter
       </NuxtLink>
     </template>
   </AuthCard>
@@ -49,19 +63,18 @@
 definePageMeta({ layout: false })
 
 const authStore = useAuthStore()
-const route = useRoute()
 
+const name = ref('')
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
-// Le flux Google redirige ici avec ?error=google quand l'échange du code échoue.
-const error = ref(route.query.error === 'google' ? 'La connexion avec Google a échoué, réessayez.' : '')
+const error = ref('')
 
 async function onSubmit() {
   loading.value = true
   error.value = ''
   try {
-    await authStore.login(email.value, password.value)
+    await authStore.register(email.value, name.value, password.value)
     await navigateTo('/')
   } catch (e) {
     error.value = (e as Error).message
@@ -69,5 +82,4 @@ async function onSubmit() {
     loading.value = false
   }
 }
-// La redirection d'un utilisateur déjà connecté est gérée par `auth.global.ts`.
 </script>
