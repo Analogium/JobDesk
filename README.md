@@ -172,7 +172,19 @@ docker compose --profile legacy up -d backend nginx  # relance Symfony + Nginx
 
 ## CI/CD
 
-Pipeline GitHub Actions (lint + tests + build Docker) sur chaque push et PR. Les jobs backend sont en cours d'alignement sur le build Maven du nouveau backend Java.
+Pipeline GitHub Actions (`.github/workflows/ci.yml`), sur chaque push et PR :
+
+```
+backend-tests (Maven + JUnit) ─┐
+frontend-lint  (ESLint)        ├─→ build-check (images Docker) ─→ deploy (VPS)
+frontend-tests (Vitest)        ─┘                                  push master
+```
+
+**Déploiement continu** : un push sur `master` dont le CI est vert déclenche
+automatiquement, sur le VPS, un `git pull` + `docker compose build && up -d` des services
+`jobdesk-backend`, `jobdesk-frontend`, `jobdesk-playwright`, suivi d'un smoke test HTTP.
+L'accès SSH est fourni par les secrets `VPS_HOST` / `VPS_PORT` / `VPS_USER` /
+`VPS_SSH_KEY` / `VPS_KNOWN_HOSTS`.
 
 ---
 
