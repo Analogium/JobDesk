@@ -25,10 +25,5 @@ definePageMeta({ layout: false })
 
 const config = useRuntimeConfig()
 const apiUrl = config.public.apiUrl
-const authStore = useAuthStore()
-
-// Already logged in
-if (authStore.isAuthenticated) {
-  await navigateTo('/')
-}
+// La redirection d'un utilisateur déjà connecté est gérée par `auth.global.ts`.
 </script>

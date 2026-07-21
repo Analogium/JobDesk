@@ -6,22 +6,16 @@ import { useAuthStore } from '~/stores/auth'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {}
-  return {
-    getItem:    (k: string) => store[k] ?? null,
-    setItem:    (k: string, v: string) => { store[k] = v },
-    removeItem: (k: string) => { Reflect.deleteProperty(store, k) },
-    clear:      () => { store = {} },
-  }
-})()
-vi.stubGlobal('localStorage', localStorageMock)
+// Le token est désormais persisté via useCookie (et non localStorage) :
+// on repart d'un cookie vide avant chaque test.
+function clearAuthCookie() {
+  document.cookie = 'jobdesk_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+}
 
 describe('useAuthStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
-    localStorageMock.clear()
+    clearAuthCookie()
     mockFetch.mockReset()
   })
 
@@ -37,17 +31,15 @@ describe('useAuthStore', () => {
     auth.setToken('my-jwt')
     expect(auth.token).toBe('my-jwt')
     expect(auth.isAuthenticated).toBe(true)
-    expect(localStorageMock.getItem('jobdesk_token')).toBe('my-jwt')
   })
 
-  it('logout clears token, user and localStorage', () => {
+  it('logout clears token and user', () => {
     const auth = useAuthStore()
     auth.setToken('my-jwt')
     auth.logout()
     expect(auth.token).toBeNull()
     expect(auth.user).toBeNull()
     expect(auth.isAuthenticated).toBe(false)
-    expect(localStorageMock.getItem('jobdesk_token')).toBeNull()
   })
 
   it('fetchMe sets user on success', async () => {

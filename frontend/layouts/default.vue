@@ -75,13 +75,7 @@
 </template>
 
 <script setup lang="ts">
+// La redirection est assurée par le middleware global `auth.global.ts`,
+// qui s'exécute avant le rendu (SSR inclus).
 const authStore = useAuthStore()
-const route = useRoute()
-
-// Guard côté client uniquement (localStorage indisponible côté serveur)
-onMounted(() => {
-  if (!authStore.isAuthenticated && !route.path.startsWith('/auth')) {
-    navigateTo('/auth/login')
-  }
-})
 </script>

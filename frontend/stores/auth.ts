@@ -2,24 +2,28 @@ import { defineStore } from 'pinia'
 import type { User } from '~/types'
 
 export const useAuthStore = defineStore('auth', () => {
-  const token = ref<string | null>(null)
+  // Cookie plutôt que localStorage : il voyage avec la requête HTTP, donc le token
+  // est disponible côté serveur (SSR) et le middleware global peut rediriger AVANT
+  // le rendu de la page.
+  const token = useCookie<string | null>('jobdesk_token', {
+    default: () => null,
+    maxAge: 60 * 60 * 24 * 30,
+    sameSite: 'lax',
+    // En prod (HTTPS derrière Traefik) le cookie ne doit jamais transiter en clair.
+    // Désactivé en dev, servi en HTTP sur localhost.
+    secure: !import.meta.dev,
+  })
   const user = ref<User | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
 
   function setToken(t: string) {
     token.value = t
-    if (import.meta.client) {
-      localStorage.setItem('jobdesk_token', t)
-    }
   }
 
   function logout() {
     token.value = null
     user.value = null
-    if (import.meta.client) {
-      localStorage.removeItem('jobdesk_token')
-    }
   }
 
   async function fetchMe() {
@@ -39,17 +43,7 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  function init() {
-    if (import.meta.client) {
-      const stored = localStorage.getItem('jobdesk_token')
-      if (stored) {
-        token.value = stored
-        fetchMe()
-      }
-    }
-  }
-
-  return { token, user, isAuthenticated, setToken, logout, fetchMe, init }
+  return { token, user, isAuthenticated, setToken, logout, fetchMe }
 }, {
   persist: false,
 })
