@@ -101,16 +101,6 @@ docker run --rm -v "$PWD/backend-java":/app -v jobdesk_m2:/root/.m2 \
 | Compilation Maven | Garde-fou statique du backend Java |
 | ESLint (`@nuxt/eslint`) | TypeScript + Vue 3 |
 
-### Git hooks
-
-Les hooks sont versionnés dans `.githooks/`. À activer une fois après le clone :
-
-```bash
-make setup      # ou : git config core.hooksPath .githooks
-```
-
-Le hook `pre-push` bloque le push si lint ou tests échouent.
-
 ### Commandes utiles
 
 ```bash
@@ -141,8 +131,7 @@ JobDesk/
 ├── backend/               # Ancien backend Symfony 7.4 — LEGACY (fallback)
 ├── frontend/              # Nuxt 3 (pages, stores Pinia, composables, tests Vitest)
 ├── playwright-scraper/    # Microservice de rendu headless
-├── .github/workflows/     # CI
-├── .githooks/             # pre-push hook
+├── .github/workflows/     # CI + déploiement continu
 ├── lint.sh · test.sh · Makefile
 └── docker-compose.yml
 ```
@@ -152,14 +141,18 @@ JobDesk/
 ## API
 
 API REST JSON. Toutes les routes `/api/**` nécessitent un JWT (`Authorization: Bearer <token>`).
+L'access token expire en 15 min ; le frontend le renouvelle en silence via `/auth/refresh`
+(refresh token à rotation, valable 30 jours), donc pas de reconnexion tant que la session vit.
 
 | Endpoint | Méthode | Description |
 |---|---|---|
-| `/auth/register` | POST | Inscription email + mot de passe → `{ token, user }` |
-| `/auth/login` | POST | Connexion email + mot de passe → `{ token, user }` |
+| `/auth/register` | POST | Inscription email + mot de passe → `{ token, refreshToken, user }` |
+| `/auth/login` | POST | Connexion email + mot de passe → `{ token, refreshToken, user }` |
+| `/auth/refresh` | POST | Échange un refresh token contre un nouveau couple `{ token, refreshToken }` (rotation) |
+| `/auth/logout` | POST | Révoque le refresh token fourni |
 | `/auth/password/forgot` | POST | Envoie un lien de réinitialisation (204 même si l'email est inconnu, 429 au-delà de 3 demandes / 15 min) |
 | `/auth/password/reset` | POST | Définit un nouveau mot de passe à partir du token du lien |
-| `/auth/google` | GET | Démarre le login Google (→ redirige vers `/auth/callback?token=`) |
+| `/auth/google` | GET | Démarre le login Google (→ redirige vers `/auth/callback?token=&refresh=`) |
 | `/api/me` | GET | Profil de l'utilisateur connecté |
 | `/api/applications` | GET | Liste paginée `{ member, totalItems }` (filtres `status`, `source`, `contractType`, tri `order[...]`) |
 | `/api/applications` | POST | Créer une candidature |
