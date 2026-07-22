@@ -65,7 +65,13 @@ app:
   jwt:
     # HS256. Par défaut on réutilise APP_SECRET ; overridable via JWT_SECRET.
     secret: ${JWT_SECRET:${APP_SECRET:change_me_generate_a_32_char_secret}}
-    ttl-seconds: 3600
+    # Access token volontairement court (15 min) : non révocable, sa fuite est vite périmée.
+    # La session est maintenue par le refresh token (voir app.refresh).
+    ttl-seconds: 900
+  refresh:
+    # Durée de vie d'une session sans reconnexion : 30 jours. Le refresh token est
+    # révocable et tourne à chaque usage (voir RefreshTokenService).
+    ttl-seconds: 2592000
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   backend-url: ${BACKEND_URL:http://localhost:8080}
   cors-allow-origin: ${CORS_ALLOW_ORIGIN:http://localhost:3000}

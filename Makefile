@@ -1,9 +1,4 @@
-.PHONY: setup lint test
-
-## First-time setup: install git hooks
-setup:
-	git config core.hooksPath .githooks
-	@echo "✔ Git hooks installed (.githooks/pre-push)"
+.PHONY: lint test
 
 ## Run all lint checks (add --fix to auto-correct)
 lint:

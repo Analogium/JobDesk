@@ -4,6 +4,7 @@ import com.jobdesk.domain.PasswordResetToken;
 import com.jobdesk.domain.User;
 import com.jobdesk.repository.PasswordResetTokenRepository;
 import com.jobdesk.repository.UserRepository;
+import com.jobdesk.security.Tokens;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,13 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.Base64;
-import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -34,14 +29,10 @@ public class PasswordResetService {
 
     private static final Logger log = LoggerFactory.getLogger(PasswordResetService.class);
 
-    /** 32 octets tirés d'un SecureRandom : impossible à deviner par force brute. */
-    private static final int TOKEN_BYTES = 32;
-
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final MailService mailService;
-    private final SecureRandom random = new SecureRandom();
     private final String frontendUrl;
     private final long ttlSeconds;
 
@@ -75,13 +66,10 @@ public class PasswordResetService {
         // Une demande invalide les liens précédents : un seul lien actif à la fois.
         tokenRepository.deleteByUser(user);
 
-        byte[] raw = new byte[TOKEN_BYTES];
-        random.nextBytes(raw);
-        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(raw);
-
+        String token = Tokens.random();
         PasswordResetToken entity = new PasswordResetToken();
         entity.setUser(user);
-        entity.setTokenHash(sha256(token));
+        entity.setTokenHash(Tokens.sha256(token));
         entity.setExpiresAt(LocalDateTime.now().plusSeconds(ttlSeconds));
         tokenRepository.save(entity);
 
@@ -90,7 +78,7 @@ public class PasswordResetService {
 
     @Transactional
     public void reset(String token, String newPassword) {
-        PasswordResetToken entity = tokenRepository.findByTokenHash(sha256(token))
+        PasswordResetToken entity = tokenRepository.findByTokenHash(Tokens.sha256(token))
                 .filter(t -> t.isUsable(LocalDateTime.now()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
                         "Ce lien de réinitialisation est invalide ou expiré. Refaites une demande."));
@@ -102,15 +90,6 @@ public class PasswordResetService {
         // Usage unique : le lien ne doit pas pouvoir resservir s'il traîne dans une boîte mail.
         entity.setUsedAt(LocalDateTime.now());
         tokenRepository.save(entity);
-    }
-
-    private String sha256(String value) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            return HexFormat.of().formatHex(digest.digest(value.getBytes(StandardCharsets.UTF_8)));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 indisponible", e);
-        }
     }
 
     private String normalize(String email) {

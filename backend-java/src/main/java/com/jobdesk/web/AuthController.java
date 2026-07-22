@@ -10,6 +10,8 @@ import com.jobdesk.security.JwtService;
 import com.jobdesk.security.RateLimiter;
 import com.jobdesk.service.AccountService;
 import com.jobdesk.service.PasswordResetService;
+import com.jobdesk.service.RefreshTokenService;
+import com.jobdesk.web.dto.RefreshRequest;
 import com.jobdesk.web.dto.ForgotPasswordRequest;
 import com.jobdesk.web.dto.LoginRequest;
 import com.jobdesk.web.dto.RegisterRequest;
@@ -53,13 +55,14 @@ public class AuthController {
 
     private final AccountService accountService;
     private final PasswordResetService passwordResetService;
+    private final RefreshTokenService refreshTokenService;
     private final RateLimiter rateLimiter;
     private final String backendUrl;
     private final String frontendUrl;
 
     public AuthController(GoogleOAuthService google, UserRepository userRepository, JwtService jwtService,
                           AccountService accountService, PasswordResetService passwordResetService,
-                          RateLimiter rateLimiter,
+                          RefreshTokenService refreshTokenService, RateLimiter rateLimiter,
                           @Value("${app.backend-url}") String backendUrl,
                           @Value("${app.frontend-url}") String frontendUrl) {
         this.rateLimiter = rateLimiter;
@@ -68,6 +71,7 @@ public class AuthController {
         this.jwtService = jwtService;
         this.accountService = accountService;
         this.passwordResetService = passwordResetService;
+        this.refreshTokenService = refreshTokenService;
         this.backendUrl = backendUrl;
         this.frontendUrl = frontendUrl;
     }
@@ -120,8 +124,29 @@ public class AuthController {
         }
     }
 
+    /**
+     * Échange un refresh token valide contre un nouvel access token (et un nouveau refresh,
+     * l'ancien étant révoqué). C'est ce qui évite de se reconnecter quand le JWT expire.
+     */
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request) {
+        RefreshTokenService.Rotation rotation = refreshTokenService.rotate(request.refreshToken());
+        String jwt = jwtService.generate(rotation.user());
+        return ResponseEntity.ok(new TokenResponse(jwt, rotation.refreshToken(), UserDto.from(rotation.user())));
+    }
+
+    /** Déconnexion : révoque le refresh token pour que la session ne puisse pas reprendre. */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@RequestBody(required = false) RefreshRequest request) {
+        if (request != null) {
+            refreshTokenService.revoke(request.refreshToken());
+        }
+        return ResponseEntity.noContent().build();
+    }
+
+    /** Émet l'access token (JWT court) + un refresh token, tous deux renvoyés au client. */
     private TokenResponse tokenFor(User user) {
-        return new TokenResponse(jwtService.generate(user), UserDto.from(user));
+        return new TokenResponse(jwtService.generate(user), refreshTokenService.issue(user), UserDto.from(user));
     }
 
     @GetMapping("/google")
@@ -154,8 +179,11 @@ public class AuthController {
             user.setGoogleToken(token.accessToken());
             user = userRepository.save(user);
 
+            // Le refresh token voyage dans l'URL au même titre que l'access token : le
+            // frontend les récupère sur /auth/callback puis les stocke tous les deux.
             String jwt = jwtService.generate(user);
-            return redirect(frontendUrl + "/auth/callback?token=" + jwt);
+            String refresh = refreshTokenService.issue(user);
+            return redirect(frontendUrl + "/auth/callback?token=" + jwt + "&refresh=" + refresh);
         } catch (Exception e) {
             return redirect(frontendUrl + "/auth/login?error=google");
         }
