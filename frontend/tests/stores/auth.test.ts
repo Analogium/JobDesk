@@ -6,10 +6,11 @@ import { useAuthStore } from '~/stores/auth'
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
 
-// Le token est désormais persisté via useCookie (et non localStorage) :
-// on repart d'un cookie vide avant chaque test.
+// Les tokens sont persistés via useCookie (et non localStorage) :
+// on repart de cookies vides avant chaque test.
 function clearAuthCookie() {
   document.cookie = 'jobdesk_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
+  document.cookie = 'jobdesk_refresh=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
 }
 
 describe('useAuthStore', () => {
@@ -33,13 +34,23 @@ describe('useAuthStore', () => {
     expect(auth.isAuthenticated).toBe(true)
   })
 
-  it('logout clears token and user', () => {
+  it('logout clears both tokens and the user', () => {
     const auth = useAuthStore()
-    auth.setToken('my-jwt')
+    auth.setTokens('my-jwt', 'my-refresh')
+    // logout notifie le serveur pour révoquer le refresh token.
+    mockFetch.mockResolvedValueOnce({ ok: true })
     auth.logout()
     expect(auth.token).toBeNull()
+    expect(auth.refreshToken).toBeNull()
     expect(auth.user).toBeNull()
     expect(auth.isAuthenticated).toBe(false)
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:8000/auth/logout',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ refreshToken: 'my-refresh' }),
+      }),
+    )
   })
 
   it('fetchMe sets user on success', async () => {
@@ -95,12 +106,13 @@ describe('useAuthStore', () => {
       const auth = useAuthStore()
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: 'jwt-from-login', user: fakeUser }),
+        json: async () => ({ token: 'jwt-from-login', refreshToken: 'refresh-from-login', user: fakeUser }),
       })
 
       await auth.login('alice@example.com', 'correct-horse')
 
       expect(auth.token).toBe('jwt-from-login')
+      expect(auth.refreshToken).toBe('refresh-from-login')
       expect(auth.user).toEqual(fakeUser)
       expect(auth.isAuthenticated).toBe(true)
       expect(mockFetch).toHaveBeenCalledWith(
@@ -116,12 +128,13 @@ describe('useAuthStore', () => {
       const auth = useAuthStore()
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ token: 'jwt-from-register', user: fakeUser }),
+        json: async () => ({ token: 'jwt-from-register', refreshToken: 'refresh-from-register', user: fakeUser }),
       })
 
       await auth.register('alice@example.com', 'Alice', 'correct-horse')
 
       expect(auth.token).toBe('jwt-from-register')
+      expect(auth.refreshToken).toBe('refresh-from-register')
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8000/auth/register',
         expect.objectContaining({
@@ -211,6 +224,46 @@ describe('useAuthStore', () => {
       await expect(auth.register('a@b.com', 'A', 'password123')).rejects.toThrow(
         'Une erreur est survenue, réessayez.',
       )
+    })
+  })
+
+  describe('refresh', () => {
+    it('is a no-op returning false when there is no refresh token', async () => {
+      const auth = useAuthStore()
+      const ok = await auth.refresh()
+      expect(ok).toBe(false)
+      expect(mockFetch).not.toHaveBeenCalled()
+    })
+
+    it('rotates both tokens on success', async () => {
+      const auth = useAuthStore()
+      auth.setTokens('old-jwt', 'old-refresh')
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ token: 'new-jwt', refreshToken: 'new-refresh' }),
+      })
+
+      const ok = await auth.refresh()
+
+      expect(ok).toBe(true)
+      expect(auth.token).toBe('new-jwt')
+      expect(auth.refreshToken).toBe('new-refresh')
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:8000/auth/refresh',
+        expect.objectContaining({ body: JSON.stringify({ refreshToken: 'old-refresh' }) }),
+      )
+    })
+
+    it('returns false and keeps state when the refresh token is rejected', async () => {
+      const auth = useAuthStore()
+      auth.setTokens('old-jwt', 'expired-refresh')
+      mockFetch.mockResolvedValueOnce({ ok: false, json: async () => ({}) })
+
+      const ok = await auth.refresh()
+
+      expect(ok).toBe(false)
+      // On ne déconnecte pas ici : c'est l'appelant (useApi) qui décide.
+      expect(auth.token).toBe('old-jwt')
     })
   })
 })

@@ -15,13 +15,14 @@ const authStore = useAuthStore()
 
 onMounted(async () => {
   const token = route.query.token as string | undefined
+  const refresh = route.query.refresh as string | undefined
 
-  if (!token) {
+  if (!token || !refresh) {
     await navigateTo('/auth/login')
     return
   }
 
-  authStore.setToken(token)
+  authStore.setTokens(token, refresh)
   await authStore.fetchMe()
   await navigateTo('/')
 })

@@ -5,14 +5,21 @@ export const useAuthStore = defineStore('auth', () => {
   // Cookie plutôt que localStorage : il voyage avec la requête HTTP, donc le token
   // est disponible côté serveur (SSR) et le middleware global peut rediriger AVANT
   // le rendu de la page.
-  const token = useCookie<string | null>('jobdesk_token', {
-    default: () => null,
+  const cookieOptions = {
     maxAge: 60 * 60 * 24 * 30,
-    sameSite: 'lax',
+    sameSite: 'lax' as const,
     // En prod (HTTPS derrière Traefik) le cookie ne doit jamais transiter en clair.
     // Désactivé en dev, servi en HTTP sur localhost.
     secure: !import.meta.dev,
-  })
+  }
+
+  // Cookie plutôt que localStorage : il voyage avec la requête HTTP, donc le token
+  // est disponible côté serveur (SSR) et le middleware global peut rediriger AVANT
+  // le rendu de la page.
+  const token = useCookie<string | null>('jobdesk_token', { default: () => null, ...cookieOptions })
+  // Access token court : quand il expire, ce refresh token permet d'en obtenir un
+  // nouveau sans reconnexion (voir `refresh` + l'intercepteur 401 de useApi).
+  const refreshToken = useCookie<string | null>('jobdesk_refresh', { default: () => null, ...cookieOptions })
   const user = ref<User | null>(null)
 
   const isAuthenticated = computed(() => !!token.value)
@@ -21,9 +28,48 @@ export const useAuthStore = defineStore('auth', () => {
     token.value = t
   }
 
+  function setTokens(access: string, refresh: string) {
+    token.value = access
+    refreshToken.value = refresh
+  }
+
   function logout() {
+    // Révoque le refresh token côté serveur pour que la session ne reprenne pas.
+    if (refreshToken.value) {
+      const config = useRuntimeConfig()
+      fetch(`${config.public.apiUrl}/auth/logout`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken: refreshToken.value }),
+      }).catch(() => {}) // best-effort : on efface la session locale quoi qu'il arrive
+    }
     token.value = null
+    refreshToken.value = null
     user.value = null
+  }
+
+  /**
+   * Échange le refresh token contre un nouvel access token (rotation). Renvoie true si la
+   * session a pu être prolongée, false sinon (refresh absent, expiré ou révoqué).
+   */
+  async function refresh(): Promise<boolean> {
+    if (!refreshToken.value) return false
+    const config = useRuntimeConfig()
+    try {
+      const res = await fetch(`${config.public.apiUrl}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ refreshToken: refreshToken.value }),
+      })
+      if (!res.ok) return false
+      const data = await res.json()
+      token.value = data.token
+      refreshToken.value = data.refreshToken
+      if (data.user) user.value = data.user
+      return true
+    } catch {
+      return false
+    }
   }
 
   /**
@@ -46,10 +92,10 @@ export const useAuthStore = defineStore('auth', () => {
     return data
   }
 
-  /** Ouvre la session à partir d'une réponse `{ token, user }`. */
+  /** Ouvre la session à partir d'une réponse `{ token, refreshToken, user }`. */
   async function authRequest(path: string, body: Record<string, string>) {
     const data = await postJson(path, body)
-    token.value = data.token
+    setTokens(data.token, data.refreshToken)
     user.value = data.user
   }
 
@@ -92,9 +138,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   return {
     token,
+    refreshToken,
     user,
     isAuthenticated,
     setToken,
+    setTokens,
+    refresh,
     logout,
     login,
     register,
