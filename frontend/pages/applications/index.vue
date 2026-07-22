@@ -3,7 +3,11 @@
     <div class="flex items-center justify-between mb-8">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Candidatures</h1>
-        <p class="text-gray-500 text-sm mt-1">{{ store.applications.length }} au total</p>
+        <p class="text-gray-500 text-sm mt-1">
+          {{ search || filter !== 'ALL'
+            ? `${filtered.length} sur ${store.applications.length}`
+            : `${store.applications.length} au total` }}
+        </p>
       </div>
       <NuxtLink
         to="/applications/new"
@@ -14,6 +18,34 @@
         </svg>
         Ajouter
       </NuxtLink>
+    </div>
+
+    <!-- Search -->
+    <div class="relative mb-4">
+      <svg
+        class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        fill="none" stroke="currentColor" viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        v-model="search"
+        type="search"
+        placeholder="Rechercher une entreprise, un poste, un lieu…"
+        aria-label="Rechercher une candidature"
+        class="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+      >
+      <button
+        v-if="search"
+        type="button"
+        aria-label="Effacer la recherche"
+        class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+        @click="search = ''"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
     </div>
 
     <!-- Filters -->
@@ -37,7 +69,7 @@
     <!-- List -->
     <div v-if="store.loading" class="text-sm text-gray-400">Chargement…</div>
     <div v-else-if="!filtered.length" class="text-sm text-gray-400 py-12 text-center">
-      Aucune candidature dans cette catégorie.
+      {{ search ? `Aucune candidature ne correspond à « ${search} ».` : 'Aucune candidature dans cette catégorie.' }}
     </div>
     <ul v-else class="space-y-3">
       <li
@@ -125,16 +157,21 @@ const store = useApplicationsStore()
 onMounted(() => store.fetchAll())
 
 const filter = ref<ApplicationStatus | 'ALL'>('ALL')
+const search = ref('')
 
 const statusOrder: ApplicationStatus[] = [
   'APPLIED', 'WAITING', 'RELAUNCH', 'INTERVIEW', 'OFFER', 'DRAFT', 'REFUSED', 'ABANDONED',
 ]
 
-const filtered = computed(() =>
-  filter.value === 'ALL'
+// Filtre par statut d'abord (les compteurs des onglets restent le total par statut),
+// puis recherche texte par-dessus. Les deux se cumulent.
+const filtered = computed(() => {
+  const base = filter.value === 'ALL'
     ? store.applications
     : (store.byStatus[filter.value] ?? [])
-)
+  const q = search.value.trim()
+  return q ? base.filter(app => matchesQuery(app, q)) : base
+})
 
 const pageSize = 20
 const currentPage = ref(1)
@@ -146,8 +183,8 @@ const paginated = computed(() => {
   return filtered.value.slice(start, start + pageSize)
 })
 
-// Revenir à la première page quand on change de filtre
-watch(filter, () => { currentPage.value = 1 })
+// Revenir à la première page quand on change de filtre ou de recherche
+watch([filter, search], () => { currentPage.value = 1 })
 
 // Éviter de rester sur une page vide si la liste rétrécit (suppression, etc.)
 watch(totalPages, (n) => { if (currentPage.value > n) currentPage.value = n })
