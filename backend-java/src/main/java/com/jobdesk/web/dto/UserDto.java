@@ -10,6 +10,9 @@ public record UserDto(
         String email,
         String name,
         String avatarUrl,
+        /** Présence d'un mot de passe, jamais sa valeur : l'UI en a besoin pour savoir
+         *  s'il faut le redemander (un compte Google n'en a pas). */
+        boolean hasPassword,
         LocalDateTime lastMailScanAt,
         LocalDateTime createdAt
 ) {
@@ -19,6 +22,7 @@ public record UserDto(
                 u.getEmail(),
                 u.getName(),
                 u.getAvatarUrl(),
+                u.getPasswordHash() != null,
                 u.getLastMailScanAt(),
                 u.getCreatedAt()
         );

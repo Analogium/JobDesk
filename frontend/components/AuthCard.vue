@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+  <div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center px-4">
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-10 w-full max-w-sm">
       <div class="text-center mb-8">
         <h1 class="text-2xl font-bold text-gray-900 mb-2">JobDesk</h1>
@@ -31,6 +31,13 @@
         <slot name="footer" />
       </p>
     </div>
+
+    <!-- Accessibles sans compte : on doit pouvoir les lire avant de s'inscrire. -->
+    <p class="text-center text-xs text-gray-400 mt-6">
+      <NuxtLink to="/legal/confidentialite" class="hover:text-gray-600">Confidentialité</NuxtLink>
+      <span class="mx-2">·</span>
+      <NuxtLink to="/legal/mentions" class="hover:text-gray-600">Mentions légales</NuxtLink>
+    </p>
   </div>
 </template>
 

@@ -93,6 +93,86 @@
         </div>
       </div>
     </div>
+
+    <!-- Mes données (RGPD) -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+      <h2 class="font-semibold text-gray-900">Mes données</h2>
+      <p class="text-sm text-gray-500 mt-1">
+        Vous pouvez récupérer une copie de vos données à tout moment, ou supprimer
+        définitivement votre compte.
+        <NuxtLink to="/legal/confidentialite" class="text-brand-600 hover:text-brand-700">
+          Politique de confidentialité
+        </NuxtLink>
+      </p>
+
+      <div class="mt-4">
+        <button
+          type="button"
+          :disabled="exporting"
+          class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          @click="exportData"
+        >
+          {{ exporting ? 'Préparation…' : 'Télécharger mes données (JSON)' }}
+        </button>
+        <p class="text-xs text-gray-400 mt-2">
+          Compte, candidatures, historiques de statut, contacts et journaux de scan.
+        </p>
+      </div>
+    </div>
+
+    <!-- Zone de danger -->
+    <div class="bg-white rounded-xl border border-red-200 p-6 mt-6">
+      <h2 class="font-semibold text-red-700">Supprimer mon compte</h2>
+      <p class="text-sm text-gray-500 mt-1">
+        Efface définitivement votre compte et toutes vos candidatures. Cette action est
+        immédiate et irréversible : pensez à exporter vos données avant.
+      </p>
+
+      <button
+        v-if="!confirmingDelete"
+        type="button"
+        class="mt-4 px-4 py-2 border border-red-300 text-red-700 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors"
+        @click="confirmingDelete = true"
+      >
+        Supprimer mon compte
+      </button>
+
+      <form v-else class="mt-4 space-y-3" @submit.prevent="deleteAccount">
+        <!-- Le mot de passe n'est demandé qu'aux comptes qui en ont un (pas les comptes Google). -->
+        <div v-if="hasPassword">
+          <label for="deletePassword" class="block text-sm font-medium text-gray-700 mb-1">
+            Confirmez avec votre mot de passe
+          </label>
+          <input
+            id="deletePassword"
+            v-model="deletePassword"
+            type="password"
+            required
+            autocomplete="current-password"
+            class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+          >
+        </div>
+
+        <p v-if="deleteError" class="text-sm text-red-600">{{ deleteError }}</p>
+
+        <div class="flex gap-2">
+          <button
+            type="submit"
+            :disabled="deleting"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {{ deleting ? 'Suppression…' : 'Supprimer définitivement' }}
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            @click="cancelDelete"
+          >
+            Annuler
+          </button>
+        </div>
+      </form>
+    </div>
   </div>
 </template>
 
@@ -114,6 +194,69 @@ const gmailStatus = ref<GmailStatus | null>(null)
 const scanning = ref(false)
 const scanResult = ref<ScanResult | null>(null)
 const errorMessage = ref<string | null>(null)
+
+// ── Mes données (RGPD) ───────────────────────────────────────────────────────
+const authStore = useAuthStore()
+const config = useRuntimeConfig()
+
+const exporting = ref(false)
+const confirmingDelete = ref(false)
+const deletePassword = ref('')
+const deleteError = ref<string | null>(null)
+const deleting = ref(false)
+
+const hasPassword = computed(() => authStore.user?.hasPassword ?? true)
+
+/**
+ * Téléchargement via un blob plutôt qu'un lien direct : l'endpoint est protégé par le
+ * header Authorization, qu'une navigation classique n'enverrait pas.
+ */
+async function exportData() {
+  exporting.value = true
+  errorMessage.value = null
+  try {
+    const res = await fetch(`${config.public.apiUrl}/api/me/export`, {
+      headers: { Authorization: `Bearer ${authStore.token}` },
+    })
+    if (!res.ok) throw new Error('Export impossible, réessayez.')
+
+    const blob = await res.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `jobdesk-donnees-${new Date().toISOString().slice(0, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (e: unknown) {
+    errorMessage.value = e instanceof Error ? e.message : 'Export impossible'
+  } finally {
+    exporting.value = false
+  }
+}
+
+function cancelDelete() {
+  confirmingDelete.value = false
+  deletePassword.value = ''
+  deleteError.value = null
+}
+
+async function deleteAccount() {
+  deleting.value = true
+  deleteError.value = null
+  try {
+    await apiFetch('/api/me', {
+      method: 'DELETE',
+      body: JSON.stringify({ password: deletePassword.value }),
+    })
+    // Le compte n'existe plus : on efface la session locale avant de sortir.
+    authStore.logout()
+    await navigateTo('/auth/login')
+  } catch (e: unknown) {
+    deleteError.value = e instanceof Error ? e.message : 'Suppression impossible'
+  } finally {
+    deleting.value = false
+  }
+}
 
 async function connectGmail() {
   errorMessage.value = null

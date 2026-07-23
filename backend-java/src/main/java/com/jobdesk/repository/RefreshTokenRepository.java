@@ -20,8 +20,20 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
     @Query("select t from RefreshToken t join fetch t.user where t.tokenHash = :tokenHash")
     Optional<RefreshToken> findByTokenHash(String tokenHash);
 
+    /** Suppression du compte : on retire les sessions avant l'utilisateur lui-même. */
+    void deleteByUser(User user);
+
     /** Révoque toutes les sessions d'un user (rejeu détecté, ou déconnexion globale). */
     @Modifying
     @Query("update RefreshToken t set t.revokedAt = :now where t.user = :user and t.revokedAt is null")
     void revokeAllForUser(User user, LocalDateTime now);
+
+    /**
+     * Purge les jetons qui ne peuvent plus servir : expirés, ou révoqués de longue date.
+     * On garde brièvement les révoqués récents, car c'est leur présence qui permet de
+     * détecter un rejeu (cf. {@code RefreshTokenService.rotate}).
+     */
+    @Modifying
+    @Query("delete from RefreshToken t where t.expiresAt < :now or (t.revokedAt is not null and t.revokedAt < :revokedBefore)")
+    int deleteUnusable(LocalDateTime now, LocalDateTime revokedBefore);
 }
