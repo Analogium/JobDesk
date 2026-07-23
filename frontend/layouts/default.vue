@@ -42,6 +42,12 @@
         </NuxtLink>
       </nav>
 
+      <div class="px-4 pb-2 text-xs text-gray-400">
+        <NuxtLink to="/legal/confidentialite" class="hover:text-gray-600">Confidentialité</NuxtLink>
+        <span class="mx-1.5">·</span>
+        <NuxtLink to="/legal/mentions" class="hover:text-gray-600">Mentions</NuxtLink>
+      </div>
+
       <!-- User -->
       <div v-if="authStore.user" class="px-4 py-4 border-t border-gray-200">
         <div class="flex items-center gap-3">

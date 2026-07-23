@@ -66,6 +66,15 @@
       >
         {{ loading ? 'Création…' : 'Créer mon compte' }}
       </button>
+
+      <!-- Information au moment de la collecte (RGPD art. 13). -->
+      <p class="text-xs text-gray-400 text-center">
+        En créant un compte, vous acceptez que vos données soient traitées comme décrit dans
+        notre
+        <NuxtLink to="/legal/confidentialite" class="text-brand-600 hover:text-brand-700">
+          politique de confidentialité
+        </NuxtLink>.
+      </p>
     </form>
 
     <template #footer>

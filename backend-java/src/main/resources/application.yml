@@ -86,6 +86,10 @@ app:
   password-reset:
     # Durée de validité du lien de réinitialisation (1 h).
     ttl-seconds: 3600
+  retention:
+    # Limitation de conservation (RGPD art. 5) : ancienneté au-delà de laquelle les
+    # journaux de scan Gmail sont purgés. Ne concerne ni les comptes ni les candidatures.
+    mail-scan-days: 365
 
 logging:
   level:

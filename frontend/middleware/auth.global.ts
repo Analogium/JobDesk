@@ -6,8 +6,11 @@
 export default defineNuxtRouteMiddleware((to) => {
   const authStore = useAuthStore()
   const isAuthRoute = to.path.startsWith('/auth')
+  // Les pages légales doivent rester lisibles sans compte : on doit pouvoir consulter
+  // la politique de confidentialité avant de s'inscrire.
+  const isPublicRoute = isAuthRoute || to.path.startsWith('/legal')
 
-  if (!authStore.isAuthenticated && !isAuthRoute) {
+  if (!authStore.isAuthenticated && !isPublicRoute) {
     return navigateTo('/auth/login')
   }
 

@@ -28,6 +28,8 @@ export interface User {
   email: string
   name: string
   avatarUrl: string | null
+  /** Un compte créé via Google n'a pas de mot de passe. */
+  hasPassword: boolean
   lastMailScanAt: string | null
   createdAt: string
 }

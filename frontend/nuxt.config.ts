@@ -12,6 +12,15 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiUrl: process.env.NUXT_PUBLIC_API_URL ?? 'http://localhost:8000',
+      // Identité de l'éditeur affichée dans les pages légales (mentions obligatoires
+      // art. 6 LCEN) et comme contact pour l'exercice des droits RGPD. Renseignée par
+      // l'environnement pour ne pas figer une adresse personnelle dans un dépôt public.
+      legal: {
+        editor: process.env.NUXT_PUBLIC_LEGAL_EDITOR ?? '',
+        status: process.env.NUXT_PUBLIC_LEGAL_STATUS ?? '',
+        address: process.env.NUXT_PUBLIC_LEGAL_ADDRESS ?? '',
+        contact: process.env.NUXT_PUBLIC_LEGAL_CONTACT ?? '',
+      },
     },
   },
 

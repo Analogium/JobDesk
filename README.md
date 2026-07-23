@@ -53,6 +53,15 @@ SMTP_PORT=587
 SMTP_USER=
 SMTP_PASSWORD=
 EMAIL_FROM=expediteur_valide_chez_brevo@example.com
+
+# Mentions légales (art. 6 LCEN) et contact pour l'exercice des droits RGPD.
+# Affichées sur /legal/mentions et /legal/confidentialite ; laissées vides, ces pages
+# indiquent « À compléter ». En variables d'environnement pour ne pas figer une
+# adresse personnelle dans le dépôt.
+LEGAL_EDITOR=Prénom Nom
+LEGAL_STATUS=Particulier — projet personnel non commercial
+LEGAL_ADDRESS=12 rue Exemple, 69000 Lyon, France
+LEGAL_CONTACT=contact@exemple.fr
 ```
 
 ### 2. Démarrage
@@ -154,6 +163,8 @@ L'access token expire en 15 min ; le frontend le renouvelle en silence via `/aut
 | `/auth/password/reset` | POST | Définit un nouveau mot de passe à partir du token du lien |
 | `/auth/google` | GET | Démarre le login Google (→ redirige vers `/auth/callback?token=&refresh=`) |
 | `/api/me` | GET | Profil de l'utilisateur connecté |
+| `/api/me/export` | GET | Export RGPD complet du compte en JSON (accès + portabilité) |
+| `/api/me` | DELETE | Suppression définitive du compte et de toutes ses données |
 | `/api/applications` | GET | Liste paginée `{ member, totalItems }` (filtres `status`, `source`, `contractType`, tri `order[...]`) |
 | `/api/applications` | POST | Créer une candidature |
 | `/api/applications/{id}` | GET · PATCH · DELETE | Détail · modif (`merge-patch+json`, historique auto au changement de statut) · suppression |
@@ -161,7 +172,19 @@ L'access token expire en 15 min ; le frontend le renouvelle en silence via `/aut
 | `/api/gmail/callback` | GET | Callback OAuth Gmail (public) |
 | `/api/scrape` | POST | Import d'une offre depuis une URL |
 
-Un scan Gmail périodique (toutes les 2 h) tourne aussi en tâche de fond.
+Un scan Gmail périodique (toutes les 2 h) tourne aussi en tâche de fond, ainsi qu'une purge
+quotidienne des données périmées (jetons expirés, vieux journaux de scan).
+
+---
+
+## RGPD
+
+Les droits des personnes sont exerçables directement depuis **Paramètres** : export complet
+du compte en JSON (accès et portabilité) et suppression définitive (effacement). Les pages
+publiques `/legal/confidentialite` et `/legal/mentions` sont accessibles sans compte.
+
+Le registre des traitements, les sous-traitants et les durées de conservation sont
+documentés dans [RGPD.md](RGPD.md).
 
 ---
 
