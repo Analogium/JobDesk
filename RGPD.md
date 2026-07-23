@@ -97,10 +97,25 @@ Deux cookies strictement nécessaires (`jobdesk_token`, `jobdesk_refresh`), aucu
 mesure d'audience. Aucune bannière de consentement n'est donc requise (art. 82 loi
 Informatique et Libertés / directive ePrivacy).
 
+## Identité de l'éditeur
+
+Renseignée par variables d'environnement, jamais en dur dans le dépôt (données
+personnelles réelles, dépôt public) :
+
+| Variable | Contenu |
+|---|---|
+| `LEGAL_EDITOR` | Nom de l'éditeur / directeur de la publication |
+| `LEGAL_STATUS` | Statut (particulier, auto-entrepreneur, société…) |
+| `LEGAL_ADDRESS` | Adresse postale — obligatoire (art. 6 LCEN) |
+| `LEGAL_CONTACT` | Adresse email d'exercice des droits |
+
+Elles alimentent `NUXT_PUBLIC_LEGAL_*` (cf. `docker-compose.yml` et `nuxt.config.ts`).
+Non renseignées, les pages affichent « À compléter » — l'omission est visible, jamais
+silencieuse.
+
 ## Reste à faire
 
-- [ ] Compléter l'identité de l'éditeur et l'adresse de contact dans
-      `frontend/pages/legal/mentions.vue` et `confidentialite.vue` (marqueurs « À COMPLÉTER »).
+- [ ] Définir les quatre variables `LEGAL_*` en production.
 - [ ] Créer l'adresse de contact annoncée dans les pages légales et vérifier qu'elle est relevée.
 - [ ] En cas d'ouverture à d'autres utilisateurs : prévoir une procédure de notification de
       violation de données sous 72 h (art. 33).

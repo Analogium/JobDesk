@@ -2,15 +2,14 @@
   <LegalPage title="Mentions légales" :updated="updated">
     <h2>Éditeur du site</h2>
     <p>
-      <!-- ⚠️ À COMPLÉTER : la loi impose le nom, le statut et une adresse postale. -->
-      {{ EDITEUR }}<br>
-      {{ STATUT }}<br>
-      {{ ADRESSE }}<br>
-      Contact : <a :href="`mailto:${CONTACT}`">{{ CONTACT }}</a>
+      {{ legal.editor }}<br>
+      {{ legal.status }}<br>
+      {{ legal.address }}<br>
+      Contact : <a :href="`mailto:${legal.contact}`">{{ legal.contact }}</a>
     </p>
 
     <h2>Directeur de la publication</h2>
-    <p>{{ EDITEUR }}</p>
+    <p>{{ legal.editor }}</p>
 
     <h2>Hébergement</h2>
     <p>
@@ -45,12 +44,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
-// ⚠️ À COMPLÉTER avant mise en ligne publique — champs obligatoires (art. 6 LCEN).
-const EDITEUR = 'Théo Lambert'
-const STATUT = 'Particulier — projet personnel non commercial'
-const ADRESSE = 'À compléter'
-const CONTACT = 'contact@theolambert.dev'
-const updated = '22 juillet 2026'
+// Renseignées par les variables NUXT_PUBLIC_LEGAL_* (cf. nuxt.config.ts).
+const legal = useLegalInfo()
+const updated = '23 juillet 2026'
 
 useHead({ title: 'Mentions légales — JobDesk' })
 </script>

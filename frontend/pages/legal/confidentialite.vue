@@ -7,8 +7,9 @@
 
     <h2>Responsable du traitement</h2>
     <p>
-      <!-- À COMPLÉTER : identité de l'éditeur, cf. mentions légales. -->
-      {{ EDITEUR }} — contact : <a :href="`mailto:${CONTACT}`">{{ CONTACT }}</a>.
+      {{ legal.editor }} — contact :
+      <a :href="`mailto:${legal.contact}`">{{ legal.contact }}</a>
+      (voir les <NuxtLink to="/legal/mentions">mentions légales</NuxtLink>).
     </p>
 
     <h2>Données traitées</h2>
@@ -154,7 +155,8 @@
       </li>
     </ul>
     <p>
-      Pour toute autre demande : <a :href="`mailto:${CONTACT}`">{{ CONTACT }}</a>. Vous avez
+      Pour toute autre demande :
+      <a :href="`mailto:${legal.contact}`">{{ legal.contact }}</a>. Vous avez
       également le droit d'introduire une réclamation auprès de la
       <a href="https://www.cnil.fr" target="_blank" rel="noopener">CNIL</a>.
     </p>
@@ -170,10 +172,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
-// ⚠️ À COMPLÉTER : identité de l'éditeur et adresse de contact (voir mentions légales).
-const EDITEUR = 'Théo Lambert'
-const CONTACT = 'contact@theolambert.dev'
-const updated = '22 juillet 2026'
+// Renseignées par les variables NUXT_PUBLIC_LEGAL_* (cf. nuxt.config.ts).
+const legal = useLegalInfo()
+const updated = '23 juillet 2026'
 
 useHead({ title: 'Politique de confidentialité — JobDesk' })
 </script>
