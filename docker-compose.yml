@@ -102,10 +102,10 @@ services:
     environment:
       NUXT_PUBLIC_API_URL: http://localhost:8000
       # Mentions légales : valeurs réelles à définir dans le .env local (ou en prod).
-      # Laissées vides, les pages affichent « À compléter ».
+      # Laissées vides, les pages affichent « À compléter ». L'adresse postale n'est pas
+      # publiée (particulier non-professionnel, art. 6-III-2 LCEN) : détenue par l'hébergeur.
       NUXT_PUBLIC_LEGAL_EDITOR: ${LEGAL_EDITOR:-}
       NUXT_PUBLIC_LEGAL_STATUS: ${LEGAL_STATUS:-}
-      NUXT_PUBLIC_LEGAL_ADDRESS: ${LEGAL_ADDRESS:-}
       NUXT_PUBLIC_LEGAL_CONTACT: ${LEGAL_CONTACT:-}
     networks:
       - internal

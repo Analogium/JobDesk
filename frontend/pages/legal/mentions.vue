@@ -4,8 +4,12 @@
     <p>
       {{ legal.editor }}<br>
       {{ legal.status }}<br>
-      {{ legal.address }}<br>
       Contact : <a :href="`mailto:${legal.contact}`">{{ legal.contact }}</a>
+    </p>
+    <p>
+      L'éditeur étant un particulier non-professionnel, son adresse n'est pas publiée
+      ici : conformément à l'article 6-III-2 de la loi pour la confiance dans l'économie
+      numérique, elle est communiquée à l'hébergeur, dont l'identité figure ci-dessous.
     </p>
 
     <h2>Directeur de la publication</h2>

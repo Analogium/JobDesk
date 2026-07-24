@@ -56,11 +56,11 @@ EMAIL_FROM=expediteur_valide_chez_brevo@example.com
 
 # Mentions légales (art. 6 LCEN) et contact pour l'exercice des droits RGPD.
 # Affichées sur /legal/mentions et /legal/confidentialite ; laissées vides, ces pages
-# indiquent « À compléter ». En variables d'environnement pour ne pas figer une
-# adresse personnelle dans le dépôt.
+# indiquent « À compléter ». En variables d'environnement pour ne pas figer une donnée
+# personnelle dans le dépôt. L'adresse postale n'est pas publiée : particulier
+# non-professionnel, elle est détenue par l'hébergeur (art. 6-III-2 LCEN), pas affichée.
 LEGAL_EDITOR=Prénom Nom
 LEGAL_STATUS=Particulier — projet personnel non commercial
-LEGAL_ADDRESS=12 rue Exemple, 69000 Lyon, France
 LEGAL_CONTACT=contact@exemple.fr
 ```
 

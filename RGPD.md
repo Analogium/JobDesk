@@ -106,16 +106,22 @@ personnelles réelles, dépôt public) :
 |---|---|
 | `LEGAL_EDITOR` | Nom de l'éditeur / directeur de la publication |
 | `LEGAL_STATUS` | Statut (particulier, auto-entrepreneur, société…) |
-| `LEGAL_ADDRESS` | Adresse postale — obligatoire (art. 6 LCEN) |
 | `LEGAL_CONTACT` | Adresse email d'exercice des droits |
 
 Elles alimentent `NUXT_PUBLIC_LEGAL_*` (cf. `docker-compose.yml` et `nuxt.config.ts`).
 Non renseignées, les pages affichent « À compléter » — l'omission est visible, jamais
 silencieuse.
 
+**Adresse postale — non publiée.** L'éditeur étant un particulier non-professionnel,
+l'art. 6-III-2 LCEN l'autorise à ne pas afficher son adresse au public dès lors qu'elle
+est communiquée à l'hébergeur (Hostinger, détenteur des coordonnées du compte, nommé
+dans les mentions légales). La page mentionne explicitement ce choix. Il n'existe donc
+pas de variable `LEGAL_ADDRESS`.
+
 ## Reste à faire
 
-- [ ] Définir les quatre variables `LEGAL_*` en production.
+- [x] Définir les variables `LEGAL_*` en production.
 - [ ] Créer l'adresse de contact annoncée dans les pages légales et vérifier qu'elle est relevée.
 - [ ] En cas d'ouverture à d'autres utilisateurs : prévoir une procédure de notification de
-      violation de données sous 72 h (art. 33).
+      violation de données sous 72 h (art. 33), et lancer la vérification Google OAuth
+      (scope Gmail restreint → évaluation de sécurité CASA) avant de passer l'app « en production ».
