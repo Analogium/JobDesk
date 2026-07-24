@@ -120,6 +120,103 @@
       </div>
     </div>
 
+    <!-- Partage en lecture seule -->
+    <div class="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+      <h2 class="font-semibold text-gray-900">Partage en lecture seule</h2>
+      <p class="text-sm text-gray-500 mt-1">
+        Générez un lien qu'une personne de confiance pourra ouvrir pour consulter vos
+        candidatures, sans compte et sans rien pouvoir modifier. Vos notes personnelles et
+        vos contacts ne sont jamais partagés.
+      </p>
+
+      <!-- Aucun lien : proposer d'en générer un -->
+      <div v-if="!shareLink" class="mt-4 flex flex-wrap items-end gap-3">
+        <div>
+          <label for="shareTtl" class="block text-xs font-medium text-gray-600 mb-1">
+            Durée de validité
+          </label>
+          <select
+            id="shareTtl"
+            v-model="shareTtl"
+            class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+          >
+            <option value="7">7 jours</option>
+            <option value="30">30 jours</option>
+            <option value="never">Jamais</option>
+          </select>
+        </div>
+        <button
+          type="button"
+          :disabled="shareBusy"
+          class="px-4 py-2 bg-brand-600 text-white rounded-lg text-sm font-medium hover:bg-brand-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          @click="generateShareLink"
+        >
+          {{ shareBusy ? 'Génération…' : 'Générer un lien' }}
+        </button>
+      </div>
+
+      <!-- Lien actif : afficher, copier, régénérer, révoquer -->
+      <div v-else class="mt-4">
+        <label for="shareUrl" class="block text-xs font-medium text-gray-600 mb-1">
+          Lien de partage
+        </label>
+        <div class="flex gap-2">
+          <input
+            id="shareUrl"
+            :value="shareLinkFullUrl"
+            readonly
+            class="flex-1 min-w-0 px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg text-sm text-gray-700 focus:outline-none"
+            @focus="($event.target as HTMLInputElement).select()"
+          >
+          <button
+            type="button"
+            class="px-3 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+            @click="copyShareLink"
+          >
+            {{ copied ? 'Copié ✓' : 'Copier' }}
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">
+          {{ shareExpiryLabel }} · Toute personne disposant du lien peut voir vos candidatures.
+        </p>
+
+        <div class="mt-4 flex flex-wrap items-end gap-3">
+          <div>
+            <label for="shareTtlRegen" class="block text-xs font-medium text-gray-600 mb-1">
+              Nouvelle durée
+            </label>
+            <select
+              id="shareTtlRegen"
+              v-model="shareTtl"
+              class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+            >
+              <option value="7">7 jours</option>
+              <option value="30">30 jours</option>
+              <option value="never">Jamais</option>
+            </select>
+          </div>
+          <button
+            type="button"
+            :disabled="shareBusy"
+            class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            @click="regenerateShareLink"
+          >
+            Régénérer
+          </button>
+          <button
+            type="button"
+            :disabled="shareBusy"
+            class="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            @click="revokeShareLink"
+          >
+            Révoquer
+          </button>
+        </div>
+      </div>
+
+      <p v-if="shareError" class="mt-3 text-sm text-red-600">{{ shareError }}</p>
+    </div>
+
     <!-- Zone de danger -->
     <div class="bg-white rounded-xl border border-red-200 p-6 mt-6">
       <h2 class="font-semibold text-red-700">Supprimer mon compte</h2>
@@ -177,6 +274,8 @@
 </template>
 
 <script setup lang="ts">
+import type { ShareLink } from '~/types'
+
 const { apiFetch } = useApi()
 const route = useRoute()
 
@@ -258,6 +357,84 @@ async function deleteAccount() {
   }
 }
 
+// ── Partage en lecture seule ─────────────────────────────────────────────────
+const shareLink = ref<ShareLink | null>(null)
+const shareTtl = ref<'7' | '30' | 'never'>('30')
+const shareBusy = ref(false)
+const shareError = ref<string | null>(null)
+const copied = ref(false)
+
+// `window` n'existe pas au rendu serveur : l'URL n'est construite que côté client.
+const shareLinkFullUrl = computed(() =>
+  shareLink.value && import.meta.client
+    ? shareUrl(window.location.origin, shareLink.value.token)
+    : '')
+
+const shareExpiryLabel = computed(() => {
+  const link = shareLink.value
+  if (!link?.expiresAt) return "N'expire pas"
+  return `Expire le ${formatDate(link.expiresAt)}`
+})
+
+async function fetchShareLink() {
+  try {
+    // 204 (aucun lien) → apiFetch renvoie undefined.
+    shareLink.value = (await apiFetch<ShareLink>('/api/me/share-link')) ?? null
+  } catch {
+    // L'absence de lien ne doit pas empêcher la page de s'afficher.
+  }
+}
+
+async function generateShareLink() {
+  shareBusy.value = true
+  shareError.value = null
+  try {
+    const ttlDays = shareTtl.value === 'never' ? null : Number(shareTtl.value)
+    shareLink.value = await apiFetch<ShareLink>('/api/me/share-link', {
+      method: 'POST',
+      body: JSON.stringify({ ttlDays }),
+    })
+    copied.value = false
+  } catch (e: unknown) {
+    shareError.value = e instanceof Error ? e.message : 'Génération impossible'
+  } finally {
+    shareBusy.value = false
+  }
+}
+
+async function regenerateShareLink() {
+  // Régénérer casse le lien déjà distribué : on le rappelle explicitement.
+  if (!confirm('Régénérer invalide le lien actuel : les personnes à qui vous l\'avez '
+    + 'déjà transmis n\'y auront plus accès. Continuer ?')) {
+    return
+  }
+  await generateShareLink()
+}
+
+async function revokeShareLink() {
+  shareBusy.value = true
+  shareError.value = null
+  try {
+    await apiFetch('/api/me/share-link', { method: 'DELETE' })
+    shareLink.value = null
+    copied.value = false
+  } catch (e: unknown) {
+    shareError.value = e instanceof Error ? e.message : 'Révocation impossible'
+  } finally {
+    shareBusy.value = false
+  }
+}
+
+async function copyShareLink() {
+  try {
+    await navigator.clipboard.writeText(shareLinkFullUrl.value)
+    copied.value = true
+    setTimeout(() => { copied.value = false }, 2000)
+  } catch {
+    shareError.value = 'Copie impossible, sélectionnez le lien manuellement.'
+  }
+}
+
 async function connectGmail() {
   errorMessage.value = null
   try {
@@ -327,5 +504,5 @@ onMounted(() => {
   }
 })
 
-await fetchStatus()
+await Promise.all([fetchStatus(), fetchShareLink()])
 </script>

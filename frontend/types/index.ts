@@ -70,6 +70,47 @@ export interface Application {
   contacts: Contact[]
 }
 
+/** Lien de partage en lecture seule, côté titulaire (Paramètres). */
+export interface ShareLink {
+  token: string
+  createdAt: string
+  /** `null` = le lien n'expire jamais. */
+  expiresAt: string | null
+}
+
+/** Entrée d'historique réduite exposée via un lien de partage (sans les notes). */
+export interface SharedStatusHistory {
+  previousStatus: ApplicationStatus | null
+  newStatus: ApplicationStatus
+  changedAt: string
+  trigger: 'manual' | 'auto_mail'
+}
+
+/** Candidature en vue réduite (sans notes ni contacts), telle que vue par un tiers. */
+export interface SharedApplication {
+  id: string
+  companyName: string
+  jobTitle: string
+  jobUrl: string | null
+  jobDescription: string | null
+  location: string | null
+  contractType: ContractType | null
+  salaryRange: string | null
+  status: ApplicationStatus
+  appliedAt: string | null
+  source: ApplicationSource
+  createdAt: string
+  updatedAt: string
+  statusHistories: SharedStatusHistory[]
+}
+
+/** Réponse publique d'un lien de partage. */
+export interface SharedView {
+  ownerName: string | null
+  expiresAt: string | null
+  applications: SharedApplication[]
+}
+
 export interface ApplicationCreatePayload {
   companyName: string
   jobTitle: string
