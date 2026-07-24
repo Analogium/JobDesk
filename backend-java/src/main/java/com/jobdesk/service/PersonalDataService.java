@@ -6,6 +6,7 @@ import com.jobdesk.repository.ApplicationRepository;
 import com.jobdesk.repository.MailScanRepository;
 import com.jobdesk.repository.PasswordResetTokenRepository;
 import com.jobdesk.repository.RefreshTokenRepository;
+import com.jobdesk.repository.ShareLinkRepository;
 import com.jobdesk.repository.UserRepository;
 import com.jobdesk.web.dto.ApplicationDto;
 import com.jobdesk.web.dto.PersonalDataExport;
@@ -31,17 +32,20 @@ public class PersonalDataService {
     private final MailScanRepository mailScanRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final ShareLinkRepository shareLinkRepository;
 
     public PersonalDataService(UserRepository userRepository,
                                ApplicationRepository applicationRepository,
                                MailScanRepository mailScanRepository,
                                RefreshTokenRepository refreshTokenRepository,
-                               PasswordResetTokenRepository passwordResetTokenRepository) {
+                               PasswordResetTokenRepository passwordResetTokenRepository,
+                               ShareLinkRepository shareLinkRepository) {
         this.userRepository = userRepository;
         this.applicationRepository = applicationRepository;
         this.mailScanRepository = mailScanRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.shareLinkRepository = shareLinkRepository;
     }
 
     /** Rassemble tout ce que le compte contient, dans un format réutilisable ailleurs. */
@@ -56,11 +60,16 @@ public class PersonalDataService {
                         .map(PersonalDataExport.MailScanEntry::from)
                         .toList();
 
+        PersonalDataExport.ShareLinkEntry shareLink = shareLinkRepository.findByUser(user)
+                .map(PersonalDataExport.ShareLinkEntry::from)
+                .orElse(null);
+
         return new PersonalDataExport(
                 LocalDateTime.now(),
                 PersonalDataExport.Account.from(user),
                 applications,
-                scans);
+                scans,
+                shareLink);
     }
 
     /**
@@ -79,6 +88,7 @@ public class PersonalDataService {
         mailScanRepository.deleteByUser(user);
         passwordResetTokenRepository.deleteByUser(user);
         refreshTokenRepository.deleteByUser(user);
+        shareLinkRepository.deleteByUser(user);
         userRepository.delete(user);
 
         // Journalisé sans l'email : tracer la suppression ne doit pas la contredire.

@@ -43,6 +43,8 @@ public class SecurityConfig {
                         // Flow OAuth Google + endpoints publics
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/api/gmail/callback").permitAll()
+                        // Consultation d'un lien de partage : public, lecture seule.
+                        .requestMatchers(HttpMethod.GET, "/api/shared/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Tout le reste de l'API exige un JWT
                         .requestMatchers("/api/**").authenticated()

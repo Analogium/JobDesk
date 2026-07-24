@@ -1,6 +1,7 @@
 package com.jobdesk.web.dto;
 
 import com.jobdesk.domain.MailScan;
+import com.jobdesk.domain.ShareLink;
 import com.jobdesk.domain.User;
 
 import java.time.LocalDateTime;
@@ -10,13 +11,27 @@ import java.util.UUID;
 /**
  * Export de l'ensemble des données personnelles d'un compte (RGPD art. 15 « droit d'accès »
  * et art. 20 « portabilité »), dans un format structuré et lisible par machine.
+ *
+ * @param shareLink lien de partage actif, ou {@code null} si le compte n'en a pas.
  */
 public record PersonalDataExport(
         LocalDateTime exportedAt,
         Account account,
         List<ApplicationDto> applications,
-        List<MailScanEntry> mailScans
+        List<MailScanEntry> mailScans,
+        ShareLinkEntry shareLink
 ) {
+
+    /** Lien de partage en lecture seule, tel qu'exportable au titulaire. */
+    public record ShareLinkEntry(
+            String token,
+            LocalDateTime createdAt,
+            LocalDateTime expiresAt
+    ) {
+        public static ShareLinkEntry from(ShareLink link) {
+            return new ShareLinkEntry(link.getToken(), link.getCreatedAt(), link.getExpiresAt());
+        }
+    }
 
     /**
      * Les jetons OAuth Google/Gmail sont volontairement absents : ce sont des secrets

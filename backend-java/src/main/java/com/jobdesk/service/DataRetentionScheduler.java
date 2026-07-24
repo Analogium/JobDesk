@@ -3,6 +3,7 @@ package com.jobdesk.service;
 import com.jobdesk.repository.MailScanRepository;
 import com.jobdesk.repository.PasswordResetTokenRepository;
 import com.jobdesk.repository.RefreshTokenRepository;
+import com.jobdesk.repository.ShareLinkRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,15 +36,18 @@ public class DataRetentionScheduler {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailScanRepository mailScanRepository;
+    private final ShareLinkRepository shareLinkRepository;
     private final int mailScanRetentionDays;
 
     public DataRetentionScheduler(RefreshTokenRepository refreshTokenRepository,
                                   PasswordResetTokenRepository passwordResetTokenRepository,
                                   MailScanRepository mailScanRepository,
+                                  ShareLinkRepository shareLinkRepository,
                                   @Value("${app.retention.mail-scan-days:365}") int mailScanRetentionDays) {
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.mailScanRepository = mailScanRepository;
+        this.shareLinkRepository = shareLinkRepository;
         this.mailScanRetentionDays = mailScanRetentionDays;
     }
 
@@ -56,10 +60,12 @@ public class DataRetentionScheduler {
                 now, now.minusDays(REVOKED_TOKEN_GRACE_DAYS));
         int resetTokens = passwordResetTokenRepository.deleteUnusable(now);
         int scans = mailScanRepository.deleteScannedBefore(now.minusDays(mailScanRetentionDays));
+        int shareLinks = shareLinkRepository.deleteExpired(now);
 
-        if (refreshTokens + resetTokens + scans > 0) {
-            log.info("Purge RGPD : {} refresh token(s), {} lien(s) de réinitialisation, {} journal(aux) de scan",
-                    refreshTokens, resetTokens, scans);
+        if (refreshTokens + resetTokens + scans + shareLinks > 0) {
+            log.info("Purge RGPD : {} refresh token(s), {} lien(s) de réinitialisation, "
+                            + "{} journal(aux) de scan, {} lien(s) de partage expiré(s)",
+                    refreshTokens, resetTokens, scans, shareLinks);
         }
     }
 }
